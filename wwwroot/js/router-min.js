@@ -1,0 +1,1 @@
+const routes={};export function route(t,o){routes[t]=o}export function start(){const t=()=>{let t=location.hash.slice(1);if(!t)return void(location.hash="/login");const o=routes[t]||routes["/404"],e=document.getElementById("app");o&&e&&o(e)};window.addEventListener("hashchange",t),t()}

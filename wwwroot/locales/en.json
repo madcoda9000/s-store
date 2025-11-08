@@ -1,0 +1,314 @@
+{
+  "common": {
+    "appName": "S-Store",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "backToHome": "Back to Home",
+    "next": "Next",
+    "submit": "Submit",
+    "close": "Close",
+    "loading": "Loading...",
+    "search": "Search",
+    "welcome": "Welcome, {{name}}!",
+    "yes": "Yes",
+    "no": "No",
+    "warning": "Warning",
+    "toggleTheme": "Toggle theme",
+    "success": "Success",
+    "hidePwd": "Hide password",
+    "showPwd": "Show password",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "lastUpdate": "Last updated"
+  },
+  
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "emailOrUsername": "Email or Username",
+      "password": "Password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up",
+      "invalidCredentials": "Invalid credentials",
+      "emailPlaceholder": "name@example.com",
+      "passwordPlaceholder": "••••••••"
+    },
+    
+    "register": {
+      "title": "Create your account",
+      "email": "Email Address",
+      "username": "Username",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "createAccount": "Create Account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "optional": "optional",
+      "passwordsNoMatch": "Passwords do not match",
+      "minLength": "Minimum {{length}} characters"
+    },
+    
+    "forgotPassword": {
+      "title": "Reset your password",
+      "description": "Enter your email address and we'll send you instructions to reset your password.",
+      "email": "Email Address",
+      "sendResetLink": "Send Reset Link",
+      "backToLogin": "Back to login",
+      "sending": "Sending...",
+      "successMessage": "If this email is registered, a password reset link will be sent.",
+      "emailPlaceholder": "name@example.com"
+    },
+    
+    "resetPassword": {
+      "title": "Set your new password",
+      "email": "Email Address",
+      "code": "6-Digit Reset Code",
+      "codeHint": "Enter the code from your email",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "resetPassword": "Reset Password",
+      "resetting": "Resetting...",
+      "backToLogin": "Back to login",
+      "resendLink": "Resend reset link",
+      "passwordsNoMatch": "Passwords do not match",
+      "successMessage": "Password reset successful. Redirecting to login...",
+      "minLength": "Minimum 8 characters",
+      "generatePassword": "Generate secure password",
+      "toggleVisibility": "Show/hide password"
+    },
+    
+    "verifyEmail": {
+      "title": "Verify your email",
+      "description": "Enter the verification code sent to your email or click the link in the email.",
+      "email": "Email Address",
+      "code": "6-Digit Verification Code",
+      "codeHint": "Enter the code from your email",
+      "verify": "Verify Email",
+      "verifying": "Verifying...",
+      "resend": "Resend verification email",
+      "backToLogin": "Back to login",
+      "successMessage": "Email verified successfully. You can now log in."
+    },
+    
+    "logout": {
+      "loggingOut": "Logging out...",
+      "title": "Logging Out"
+    },
+    
+    "twoFactor": {
+      "required": "Two-factor authentication required",
+      "enterCode": "Enter your 6-digit authentication code",
+      "enterEmailCode": "Enter the code sent to your email",
+      "code": "Authentication Code",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "rememberDevice": "Remember this device",
+      "invalidCode": "Invalid 2FA code",
+      "emailCodeSent": "A verification code has been sent to your email"
+    },
+    
+    "setup2fa": {
+      "title": "Setup Two-Factor Authentication",
+      "enforcedNotice": "Your administrator requires two-factor authentication to be enabled.",
+      "description": "Add an extra layer of security to your account by enabling two-factor authentication.",
+      "chooseMethod": "Choose your preferred authentication method:",
+      "authenticatorMethod": {
+        "title": "Authenticator App",
+        "description": "Use an authenticator app like Google Authenticator or Authy",
+        "recommended": "Recommended",
+        "selectButton": "Use Authenticator App"
+      },
+      "emailMethod": {
+        "title": "Email Codes",
+        "description": "Receive verification codes via email",
+        "selectButton": "Use Email Codes"
+      },
+      "authenticatorSetup": {
+        "title": "Setup Authenticator App",
+        "step1": "Step 1: Scan QR Code",
+        "step1Description": "Scan this QR code with your authenticator app:",
+        "step1Alt": "Or manually enter this key:",
+        "copyKey": "Copy Key",
+        "keyCopied": "Key copied!",
+        "step2": "Step 2: Verify Setup",
+        "step2Description": "Enter the 6-digit code from your authenticator app:",
+        "code": "Verification Code",
+        "codePlaceholder": "000000",
+        "verifyButton": "Verify & Enable",
+        "verifying": "Verifying...",
+        "backButton": "Back to method selection"
+      },
+      "emailSetup": {
+        "title": "Setup Email Authentication",
+        "step1": "Step 1: Request Code",
+        "step1Description": "We'll send a verification code to your email address:",
+        "sendCodeButton": "Send Verification Code",
+        "sending": "Sending...",
+        "codeSent": "Code sent! Check your email.",
+        "step2": "Step 2: Verify Code",
+        "step2Description": "Enter the 6-digit code sent to your email:",
+        "code": "Verification Code",
+        "codePlaceholder": "000000",
+        "verifyButton": "Verify & Enable",
+        "verifying": "Verifying...",
+        "resendButton": "Resend Code",
+        "backButton": "Back to method selection"
+      },
+      "recoveryCodes": {
+        "title": "Save Your Recovery Codes",
+        "description": "These recovery codes can be used to access your account if you lose access to your authentication method. Save them in a secure location.",
+        "warning": "You won't be able to see these codes again!",
+        "copyButton": "Copy All Codes",
+        "copied": "Copied to clipboard!",
+        "downloadButton": "Download as Text",
+        "printButton": "Print Codes",
+        "confirmButton": "I've Saved My Recovery Codes",
+        "codeCount": "{{count}} codes remaining"
+      },
+      "success": {
+        "title": "Two-Factor Authentication Enabled!",
+        "description": "Your account is now protected with two-factor authentication.",
+        "methodEnabled": "Method: {{method}}",
+        "continueButton": "Continue to Dashboard"
+      },
+      "errors": {
+        "invalidCode": "Invalid verification code. Please try again.",
+        "setupFailed": "Failed to setup two-factor authentication. Please try again.",
+        "emailSendFailed": "Failed to send verification email. Please try again."
+      }
+    }
+  },
+  
+  "home": {
+    "welcome": "Welcome, {{name}}!",
+    "profileStatus": {
+      "title": "Profile Status",
+      "twoFactorEnabled": "Two-factor authentication is enabled",
+      "twoFactorDisabled": "Two-factor authentication is disabled",
+      "twoFactorMethod": "Method: {{method}}",
+      "setup2FA": "Setup 2FA"
+    },
+    "administration": {
+      "title": "Administration",
+      "description": "Manage users and system settings",
+      "manageUsers": "Manage Users"
+    },
+    "account": {
+      "title": "Your Account",
+      "description": "View and edit your profile settings",
+      "editProfile": "Edit Profile"
+    }
+  },
+  
+  "profile": {
+    "title": "Profile Settings",
+    "personalInfo": {
+      "title": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "username": "Username",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "security": {
+      "title": "Security",
+      "changePassword": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "updatePassword": "Update Password",
+      "updating": "Updating...",
+      "twoFactor": "Two-Factor Authentication",
+      "twoFactorEnabled": "2FA is enabled",
+      "twoFactorDisabled": "2FA is disabled",
+      "twoFactorMethod": "Method: {{method}}",
+      "enable2FA": "Enable 2FA",
+      "disable2FA": "Disable 2FA",
+      "change2FAMethod": "Change Method",
+      "pwChangeSuccess": "Password successfully changed",
+      "allPwFieldsRequired": "All password fields are required",
+      "newPasswordNotMatch": "New passwords do not match",
+      "newPasswordToShort": "New password must be at least 6 characters long",
+      "newPasswordNotDifferent": "New password must be different from current password",
+      "failedToUpdateProfile": "Failed to update profile",
+      "successUpdateProfile": "Profile successfully updated",
+      "successUpadteProfileLogin": "Profile updated successfully! Please login with your new email.",
+      "noChangesDetected": "No changes detected",
+      "emailRequired": "Email address is required",
+      "twoFactorEnforced": "Two-factor authentication is enforced by administrator and cannot be disabled"
+    },
+    "errors": {
+      "failedToLOadProfile": "Failed to load profile"
+    },
+    "accountInfo": {
+      "title": "Account Information",
+      "createdAt": "Account created",
+      "updatedAt": "Last updated"
+    }
+  },
+  
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "search": "Search users...",
+      "table": {
+        "username": "Username",
+        "email": "Email",
+        "roles": "Roles",
+        "twoFactor": "2FA",
+        "lockout": "Lockout",
+        "actions": "Actions"
+      },
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "locked": "Locked",
+      "notLocked": "Not Locked",
+      "reset2FA": "Reset 2FA",
+      "editUser": "Edit User",
+      "deleteUser": "Delete User"
+    }
+  },
+  
+  "errors": {
+    "generic": "An error occurred. Please try again.",
+    "unauthorized": "You are not authorized to access this page.",
+    "accessDenied": "Access Denied",
+    "accessDeniedDescription": "You do not have permission to access this page.",
+    "adminAccessRequired": "Administrator privileges are required to access this page.",
+    "unauthorizedAccess": "This unauthorized access attempt has been logged.",
+    "notFound": "Page not found",
+    "serverError": "Server error. Please try again later.",
+    "networkError": "Network error. Please check your connection.",
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "pwChangeError": "Password change failed."
+  },
+  
+  "validation": {
+    "required": "This field is required",
+    "email": "Please enter a valid email address",
+    "minLength": "Minimum {{length}} characters required",
+    "maxLength": "Maximum {{length}} characters allowed",
+    "passwordMatch": "Passwords must match",
+    "passwordRequireUppercase": "Password must contain at least one uppercase letter",
+    "passwordRequireLowercase": "Password must contain at least one lowercase letter",
+    "passwordRequireDigit": "Password must contain at least one digit"
+  },
+  
+  "nav": {
+    "home": "Home",
+    "profile": "Profile",
+    "admin": "Admin",
+    "users": "Users",
+    "settings": "Settings",
+    "logout": "Logout"
+  }
+}

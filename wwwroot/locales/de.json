@@ -1,0 +1,314 @@
+{
+  "common": {
+    "appName": "S-Store",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "backToHome": "Zurück zur Startseite",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "close": "Schließen",
+    "loading": "Laden...",
+    "search": "Suchen",
+    "welcome": "Willkommen, {{name}}!",
+    "yes": "Ja",
+    "no": "Nein",
+    "warning": "Warnung",
+    "toggleTheme": "Design wechseln",
+    "success": "Erfolg",
+    "hidePwd": "Passwort verbergen",
+    "showPwd": "Passwort anzeigen",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "lastUpdate": "Zuletzt aktualisiert"
+  },
+  
+  "auth": {
+    "login": {
+      "title": "Bei Ihrem Konto anmelden",
+      "emailOrUsername": "E-Mail oder Benutzername",
+      "password": "Passwort",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "signIn": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "signUp": "Registrieren",
+      "invalidCredentials": "Ungültige Anmeldedaten",
+      "emailPlaceholder": "name@beispiel.de",
+      "passwordPlaceholder": "••••••••"
+    },
+    
+    "register": {
+      "title": "Konto erstellen",
+      "email": "E-Mail-Adresse",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "createAccount": "Konto erstellen",
+      "haveAccount": "Bereits ein Konto?",
+      "signIn": "Anmelden",
+      "optional": "optional",
+      "passwordsNoMatch": "Passwörter stimmen nicht überein",
+      "minLength": "Mindestens {{length}} Zeichen"
+    },
+    
+    "forgotPassword": {
+      "title": "Passwort zurücksetzen",
+      "description": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen Anweisungen zum Zurücksetzen Ihres Passworts.",
+      "email": "E-Mail-Adresse",
+      "sendResetLink": "Link zum Zurücksetzen senden",
+      "backToLogin": "Zurück zur Anmeldung",
+      "sending": "Wird gesendet...",
+      "successMessage": "Falls diese E-Mail registriert ist, wird ein Link zum Zurücksetzen des Passworts gesendet.",
+      "emailPlaceholder": "name@beispiel.de"
+    },
+    
+    "resetPassword": {
+      "title": "Neues Passwort festlegen",
+      "email": "E-Mail-Adresse",
+      "code": "6-stelliger Reset-Code",
+      "codeHint": "Geben Sie den Code aus Ihrer E-Mail ein",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "resetPassword": "Passwort zurücksetzen",
+      "resetting": "Wird zurückgesetzt...",
+      "backToLogin": "Zurück zur Anmeldung",
+      "resendLink": "Link erneut senden",
+      "passwordsNoMatch": "Passwörter stimmen nicht überein",
+      "successMessage": "Passwort erfolgreich zurückgesetzt. Weiterleitung zur Anmeldung...",
+      "minLength": "Mindestens 8 Zeichen",
+      "generatePassword": "Sicheres Passwort generieren",
+      "toggleVisibility": "Passwort anzeigen/verbergen"
+    },
+    
+    "verifyEmail": {
+      "title": "E-Mail-Adresse verifizieren",
+      "description": "Geben Sie den Verifizierungscode ein, der an Ihre E-Mail gesendet wurde, oder klicken Sie auf den Link in der E-Mail.",
+      "email": "E-Mail-Adresse",
+      "code": "6-stelliger Verifizierungscode",
+      "codeHint": "Geben Sie den Code aus Ihrer E-Mail ein",
+      "verify": "E-Mail verifizieren",
+      "verifying": "Wird verifiziert...",
+      "resend": "Verifizierungs-E-Mail erneut senden",
+      "backToLogin": "Zurück zur Anmeldung",
+      "successMessage": "E-Mail erfolgreich verifiziert. Sie können sich jetzt anmelden."
+    },
+    
+    "logout": {
+      "loggingOut": "Wird abgemeldet...",
+      "title": "Abmeldung"
+    },
+    
+    "twoFactor": {
+      "required": "Zwei-Faktor-Authentifizierung erforderlich",
+      "enterCode": "Geben Sie Ihren 6-stelligen Authentifizierungscode ein",
+      "enterEmailCode": "Geben Sie den Code ein, der an Ihre E-Mail gesendet wurde",
+      "code": "Authentifizierungscode",
+      "verify": "Verifizieren",
+      "verifying": "Wird verifiziert...",
+      "rememberDevice": "Dieses Gerät merken",
+      "invalidCode": "Ungültiger 2FA-Code",
+      "emailCodeSent": "Ein Verifizierungscode wurde an Ihre E-Mail gesendet"
+    },
+    
+    "setup2fa": {
+      "title": "Zwei-Faktor-Authentifizierung einrichten",
+      "enforcedNotice": "Ihr Administrator verlangt, dass die Zwei-Faktor-Authentifizierung aktiviert wird.",
+      "description": "Fügen Sie Ihrem Konto eine zusätzliche Sicherheitsebene hinzu, indem Sie die Zwei-Faktor-Authentifizierung aktivieren.",
+      "chooseMethod": "Wählen Sie Ihre bevorzugte Authentifizierungsmethode:",
+      "authenticatorMethod": {
+        "title": "Authenticator-App",
+        "description": "Verwenden Sie eine Authenticator-App wie Google Authenticator oder Authy",
+        "recommended": "Empfohlen",
+        "selectButton": "Authenticator-App verwenden"
+      },
+      "emailMethod": {
+        "title": "E-Mail-Codes",
+        "description": "Erhalten Sie Verifizierungscodes per E-Mail",
+        "selectButton": "E-Mail-Codes verwenden"
+      },
+      "authenticatorSetup": {
+        "title": "Authenticator-App einrichten",
+        "step1": "Schritt 1: QR-Code scannen",
+        "step1Description": "Scannen Sie diesen QR-Code mit Ihrer Authenticator-App:",
+        "step1Alt": "Oder geben Sie diesen Schlüssel manuell ein:",
+        "copyKey": "Schlüssel kopieren",
+        "keyCopied": "Schlüssel kopiert!",
+        "step2": "Schritt 2: Einrichtung verifizieren",
+        "step2Description": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein:",
+        "code": "Verifizierungscode",
+        "codePlaceholder": "000000",
+        "verifyButton": "Verifizieren & Aktivieren",
+        "verifying": "Wird verifiziert...",
+        "backButton": "Zurück zur Methodenauswahl"
+      },
+      "emailSetup": {
+        "title": "E-Mail-Authentifizierung einrichten",
+        "step1": "Schritt 1: Code anfordern",
+        "step1Description": "Wir senden einen Verifizierungscode an Ihre E-Mail-Adresse:",
+        "sendCodeButton": "Verifizierungscode senden",
+        "sending": "Wird gesendet...",
+        "codeSent": "Code gesendet! Überprüfen Sie Ihre E-Mail.",
+        "step2": "Schritt 2: Code verifizieren",
+        "step2Description": "Geben Sie den 6-stelligen Code ein, der an Ihre E-Mail gesendet wurde:",
+        "code": "Verifizierungscode",
+        "codePlaceholder": "000000",
+        "verifyButton": "Verifizieren & Aktivieren",
+        "verifying": "Wird verifiziert...",
+        "resendButton": "Code erneut senden",
+        "backButton": "Zurück zur Methodenauswahl"
+      },
+      "recoveryCodes": {
+        "title": "Speichern Sie Ihre Wiederherstellungscodes",
+        "description": "Diese Wiederherstellungscodes können verwendet werden, um auf Ihr Konto zuzugreifen, wenn Sie den Zugriff auf Ihre Authentifizierungsmethode verlieren. Speichern Sie sie an einem sicheren Ort.",
+        "warning": "Sie können diese Codes später nicht mehr einsehen!",
+        "copyButton": "Alle Codes kopieren",
+        "copied": "In Zwischenablage kopiert!",
+        "downloadButton": "Als Text herunterladen",
+        "printButton": "Codes drucken",
+        "confirmButton": "Ich habe meine Wiederherstellungscodes gespeichert",
+        "codeCount": "{{count}} Codes verbleibend"
+      },
+      "success": {
+        "title": "Zwei-Faktor-Authentifizierung aktiviert!",
+        "description": "Ihr Konto ist jetzt durch Zwei-Faktor-Authentifizierung geschützt.",
+        "methodEnabled": "Methode: {{method}}",
+        "continueButton": "Weiter zum Dashboard"
+      },
+      "errors": {
+        "invalidCode": "Ungültiger Verifizierungscode. Bitte versuchen Sie es erneut.",
+        "setupFailed": "Einrichtung der Zwei-Faktor-Authentifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "emailSendFailed": "Verifizierungs-E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+      }
+    }
+  },
+  
+  "home": {
+    "welcome": "Willkommen, {{name}}!",
+    "profileStatus": {
+      "title": "Profil-Status",
+      "twoFactorEnabled": "Zwei-Faktor-Authentifizierung ist aktiviert",
+      "twoFactorDisabled": "Zwei-Faktor-Authentifizierung ist deaktiviert",
+      "twoFactorMethod": "Methode: {{method}}",
+      "setup2FA": "2FA einrichten"
+    },
+    "administration": {
+      "title": "Administration",
+      "description": "Benutzer und Systemeinstellungen verwalten",
+      "manageUsers": "Benutzer verwalten"
+    },
+    "account": {
+      "title": "Ihr Konto",
+      "description": "Profil-Einstellungen anzeigen und bearbeiten",
+      "editProfile": "Profil bearbeiten"
+    }
+  },
+  
+  "profile": {
+    "title": "Profil-Einstellungen",
+    "personalInfo": {
+      "title": "Persönliche Informationen",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail-Adresse",
+      "username": "Benutzername",
+      "save": "Änderungen speichern",
+      "saving": "Wird gespeichert..."
+    },
+    "security": {
+      "title": "Sicherheit",
+      "changePassword": "Passwort ändern",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "updatePassword": "Passwort aktualisieren",
+      "updating": "Wird aktualisiert...",
+      "twoFactor": "Zwei-Faktor-Authentifizierung",
+      "twoFactorEnabled": "2FA ist aktiviert",
+      "twoFactorDisabled": "2FA ist deaktiviert",
+      "twoFactorMethod": "Methode: {{method}}",
+      "enable2FA": "2FA aktivieren",
+      "disable2FA": "2FA deaktivieren",
+      "change2FAMethod": "Methode ändern",
+      "pwChangeSuccess": "Passwort erfolgreich geändert",
+      "allPwFieldsRequired": "Alle Passwortfelder sind erforderlich",
+      "newPasswordNotMatch": "Die Passwörter stimmen nicht überein",
+      "newPasswordToShort": "Das neue Passwort muss mindestens 6 Zeichen lang sein",
+      "newPasswordNotDifferent": "Das neue Passwort muss sich vom aktuellen Passwort unterscheiden",
+      "failedToUpdateProfile": "Profil konnte nicht aktualisiert werden",
+      "successUpdateProfile": "Profil erfolgreich aktualisiert",
+      "successUpadteProfileLogin": "Profil erfolgreich aktualisiert. Weiterleitung zur Anmeldung...",
+      "noChangesDetected": "Keine Änderungen erkannt",
+      "emailRequired": "E-Mail-Adresse erforderlich",
+      "twoFactorEnforced": "Die Zwei-Faktor-Authentifizierung wird vom Administrator erzwungen und kann nicht deaktiviert werden"
+    },
+    "errors": {
+      "failedToLoadProfile": "Profil konnte nicht geladen werden"
+    },
+    "accountInfo": {
+      "title": "Konto-Informationen",
+      "createdAt": "Konto erstellt",
+      "updatedAt": "Zuletzt aktualisiert"
+    }
+  },
+  
+  "admin": {
+    "users": {
+      "title": "Benutzerverwaltung",
+      "search": "Benutzer suchen...",
+      "table": {
+        "username": "Benutzername",
+        "email": "E-Mail",
+        "roles": "Rollen",
+        "twoFactor": "2FA",
+        "lockout": "Sperrung",
+        "actions": "Aktionen"
+      },
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "locked": "Gesperrt",
+      "notLocked": "Nicht gesperrt",
+      "reset2FA": "2FA zurücksetzen",
+      "editUser": "Benutzer bearbeiten",
+      "deleteUser": "Benutzer löschen"
+    }
+  },
+  
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "unauthorized": "Sie sind nicht berechtigt, auf diese Seite zuzugreifen.",
+    "accessDenied": "Zugriff verweigert",
+    "accessDeniedDescription": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
+    "adminAccessRequired": "Für den Zugriff auf diese Seite sind Administrator-Rechte erforderlich.",
+    "unauthorizedAccess": "Dieser unberechtigte Zugriffsversuch wurde protokolliert.",
+    "notFound": "Seite nicht gefunden",
+    "serverError": "Serverfehler. Bitte versuchen Sie es später erneut.",
+    "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "pwChangeError": "Passwortwechsel fehlgeschlagen."
+  },
+  
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "minLength": "Mindestens {{length}} Zeichen erforderlich",
+    "maxLength": "Maximal {{length}} Zeichen erlaubt",
+    "passwordMatch": "Passwörter müssen übereinstimmen",
+    "passwordRequireUppercase": "Passwort muss mindestens einen Großbuchstaben enthalten",
+    "passwordRequireLowercase": "Passwort muss mindestens einen Kleinbuchstaben enthalten",
+    "passwordRequireDigit": "Passwort muss mindestens eine Ziffer enthalten"
+  },
+  
+  "nav": {
+    "home": "Startseite",
+    "profile": "Profil",
+    "admin": "Administration",
+    "users": "Benutzer",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  }
+}

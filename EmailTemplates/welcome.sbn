@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{ app_name }}</title>
+    <style>
+        /* S-Store Email Design System */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.5;
+            color: #212529;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background-color: #0f172a;
+            color: #ffffff;
+            padding: 32px 24px;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        
+        .content {
+            padding: 32px 24px;
+        }
+        
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        
+        p {
+            margin-bottom: 16px;
+            color: #212529;
+        }
+        
+        .info-box {
+            background-color: #e0e7ff;
+            border: 1px solid #1e3a8a;
+            border-radius: 4px;
+            padding: 16px;
+            margin: 24px 0;
+        }
+        
+        .info-box strong {
+            color: #1e3a8a;
+            font-weight: 600;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #1e3a8a;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 14px;
+            margin: 20px 0;
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        .button:hover {
+            background-color: #1e40af;
+        }
+        
+        .footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .footer p {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #dee2e6;
+            margin: 24px 0;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 24px 16px;
+            }
+            
+            .header {
+                padding: 24px 16px;
+            }
+            
+            .footer {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1 class="logo">{{ app_name }}</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Welcome aboard!</h2>
+            
+            <p>Hi {{ user_name }},</p>
+            
+            <p>We're excited to have you join {{ app_name }}. Your account has been successfully created and you're ready to get started.</p>
+            
+            <div class="info-box">
+                <p style="margin: 0;"><strong>Your account email:</strong> {{ user_email }}</p>
+            </div>
+            
+            {{ if login_url }}
+            <p>Click the button below to access your account:</p>
+            <p style="text-align: center;">
+                <a href="{{ login_url }}" class="button">Access Your Account</a>
+            </p>
+            {{ end }}
+            
+            <div class="divider"></div>
+            
+            <p>If you have any questions or need assistance, feel free to reach out to our support team.</p>
+            
+            <p style="margin-bottom: 0;">Best regards,<br><strong>The {{ app_name }} Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{ current_year }} {{ app_name }}. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
