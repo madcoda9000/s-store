@@ -79,6 +79,12 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 // Register Email Background Service
 builder.Services.AddHostedService<EmailBackgroundService>();
 
+// register code generator service
+builder.Services.AddScoped<ISecureCodeGenerator, SecureCodeGenerator>();
+
+// register temporary token service
+builder.Services.AddScoped<ITemporaryTokenService, TemporaryTokenService>();
+
 // Identity Core + Roles, aber ohne Razor UI, wir liefern JSON
 builder.Services
     .AddIdentityCore<ApplicationUser>(o =>
@@ -223,9 +229,35 @@ builder.Services.Configure<IpRateLimitOptions>(opt =>
 {
     opt.GeneralRules = new()
     {
-        new() { Endpoint = "*:/auth/*",     Limit = 60, Period = "10m" },
-        new() { Endpoint = "*:/admin/*", Limit = 100, Period = "10m" }
+        // strict rate limit for login
+        new() { Endpoint = "POST:/auth/login", Limit = 5, Period = "15m" },
+        new() { Endpoint = "POST:/auth/2fa/verify-authenticator", Limit = 5, Period = "15m" },
+        new() { Endpoint = "POST:/auth/2fa/verify-email", Limit = 5, Period = "15m" },
+        new() { Endpoint = "POST:/auth/reset-password", Limit = 3, Period = "60m" },
+        new() { Endpoint = "POST:/auth/forgot-password", Limit = 3, Period = "60mm" },
+        // moderate rate limit for registration
+        new() { Endpoint = "POST:/auth/register", Limit = 3, Period = "60m" },
+        new() { Endpoint = "POST:/auth/verify.email", Limit = 10, Period = "60m" },
+        new() { Endpoint = "POST:/auth/verify-email-code", Limit = 10, Period = "60m" },
+        new() { Endpoint = "POST:/auth/resend-verification", Limit = 3, Period = "60m" },
+        // 2fa setup moderate limits
+        new() { Endpoint = "POST:/auth/2fa/setup-authenticator", Limit = 5, Period = "60m" },
+        new() { Endpoint = "POST:/auth/2fa/setup-email", Limit = 5, Period = "60m" },
+        new() { Endpoint = "POST:/auth/2fa/verify-authenticator-setup", Limit = 10, Period = "60m" },
+        new() { Endpoint = "POST:/auth/2fa/verify-email-setup", Limit = 10, Period = "60m" },
+        // default rate limit
+        new() { Endpoint = "*:/auth/*", Limit = 30, Period = "10m" },
+        new() { Endpoint = "*:/admin/*", Limit = 100, Period = "10m" },
+        new() { Endpoint = "*:/profile/*", Limit = 20, Period = "10m" },
+        new() { Endpoint = "*:/api/*", Limit = 200, Period = "10m" }
     };
+    opt.EndpointWhitelist = new() {
+        "GET:/api/csrf-token",
+        "GET:/",
+        "GET:/favicon.ico"
+    };
+    opt.QuotaExceededMessage = "You have exceeded the rate limit. Please try again later.";
+    opt.QuotaExceededResponse = new() { StatusCode = 429, Content = "Too many requests. Please try again later." };
 });
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 builder.Services.AddInMemoryRateLimiting();

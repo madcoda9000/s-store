@@ -14,6 +14,8 @@ namespace sstore.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signIn;
         private readonly UserManager<ApplicationUser> _users;
+        private readonly ISecureCodeGenerator _codeGenerator;
+        private readonly ITemporaryTokenService _tokenService;
         private readonly IAntiforgery _anti;
         private readonly ILogService _log;
 
@@ -24,16 +26,22 @@ namespace sstore.Controllers
         /// <param name="users">User manager for ApplicationUser</param>
         /// <param name="anti">Antiforgery service</param>
         /// <param name="log">Logging service</param>
+        /// <param name="codeGenerator">Secure code generator</param>
+        /// <param name="tokenService">Temporary token service</param>
         public AuthController(
             SignInManager<ApplicationUser> signIn,
             UserManager<ApplicationUser> users,
             IAntiforgery anti,
-            ILogService log)
+            ILogService log,
+            ISecureCodeGenerator codeGenerator,
+            ITemporaryTokenService tokenService)
         {
             _signIn = signIn;
             _users = users;
             _anti = anti;
             _log = log;
+            _codeGenerator = codeGenerator;
+            _tokenService = tokenService;
         }
 
         /// <summary>
@@ -111,9 +119,14 @@ namespace sstore.Controllers
                 if (user.TwoFactorMethod == "Email")
                 {
                     // Generate and send 2FA code via email
-                    var code = new Random().Next(100000, 999999).ToString();
-                    await _users.SetAuthenticationTokenAsync(user, "EmailTwoFactor", "LoginCode", code);
-                    
+                    var code = _codeGenerator.GenerateNumericCode(6);
+                    await _tokenService.StoreTokenAsync(
+                        user,
+                        "EmailTwoFactorLogin",
+                        code,
+                        TimeSpan.FromMinutes(10)
+                    );
+
                     var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
                     await emailService.SendEmailAsync(
                         "2fa-code",
@@ -132,16 +145,16 @@ namespace sstore.Controllers
                         user.DisplayName,
                         "system"
                     );
-                    
+
                     await _log.LogAuditAsync(
                         "LoginAttempt",
                         "AuthController",
                         "Login successful, 2FA email code sent",
                         user.Email ?? user.UserName);
-                    
+
                     return Ok(new { requires2fa = true, twoFactorMethod = "Email", email = user.Email });
                 }
-                
+
                 await _log.LogAuditAsync(
                     "LoginAttempt",
                     "AuthController",
@@ -173,7 +186,7 @@ namespace sstore.Controllers
                     "AuthController",
                     "User logged in but needs to set up 2FA",
                     user.Email ?? user.UserName);
-                
+
                 var tokens = _anti.GetAndStoreTokens(HttpContext);
                 return Ok(new { ok = true, needsSetup2fa = true, csrfToken = tokens.RequestToken });
             }
@@ -242,23 +255,24 @@ namespace sstore.Controllers
             }
 
             // Verify the code
-            var storedCode = await _users.GetAuthenticationTokenAsync(user, "EmailTwoFactor", "LoginCode");
-            
-            if (string.IsNullOrEmpty(storedCode) || storedCode != dto.Code)
+            var isValid = await _tokenService.ValidateAndConsumeTokenAsync(
+                user,
+                "EmailTwoFactorLogin",
+                dto.Code
+            );
+
+            if (!isValid)
             {
                 await _log.LogAuditAsync(
                     "2FAEmailVerification",
                     "AuthController",
-                    "Failed 2FA email verification attempt - invalid code",
+                    "Failed 2FA email verification - invalid or expired code",
                     user.Email ?? user.UserName);
-                return Unauthorized(new { error = "Invalid 2FA code" });
+                return Unauthorized(new { error = "Invalid or expired 2FA code" });
             }
 
             // Sign in the user
             await _signIn.SignInAsync(user, isPersistent: true);
-            
-            // Clean up the code
-            await _users.RemoveAuthenticationTokenAsync(user, "EmailTwoFactor", "LoginCode");
 
             await _log.LogAuditAsync(
                 "2FAEmailVerification",
@@ -456,8 +470,13 @@ namespace sstore.Controllers
             }
 
             // Generate verification code
-            var code = new Random().Next(100000, 999999).ToString();
-            await _users.SetAuthenticationTokenAsync(user, "EmailTwoFactorSetup", "SetupCode", code);
+            var code = _codeGenerator.GenerateNumericCode(6);
+            await _tokenService.StoreTokenAsync(
+                user,
+                "EmailTwoFactorSetup",
+                code,
+                TimeSpan.FromMinutes(10)
+            );
 
             // Send email
             var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
@@ -510,26 +529,27 @@ namespace sstore.Controllers
                 return Unauthorized();
             }
 
-            // Verify code
-            var storedCode = await _users.GetAuthenticationTokenAsync(user, "EmailTwoFactorSetup", "SetupCode");
+            // Validate token with expiration check
+            var isValid = await _tokenService.ValidateAndConsumeTokenAsync(
+                user,
+                "EmailTwoFactorSetup",
+                dto.Code
+            );
 
-            if (string.IsNullOrEmpty(storedCode) || storedCode != dto.Code)
+            if (!isValid)
             {
                 await _log.LogAuditAsync(
                     "VerifyEmailSetup",
                     "AuthController",
-                    "Failed to verify email setup code",
+                    "Failed to verify email setup code - invalid or expired",
                     user.Email ?? user.UserName);
-                return BadRequest(new { error = "Invalid verification code" });
+                return BadRequest(new { error = "Invalid or expired verification code" });
             }
 
-            // Enable 2FA
+            // Enable 2FA (Code wurde bereits automatisch entfernt)
             await _users.SetTwoFactorEnabledAsync(user, true);
             user.TwoFactorMethod = "Email";
             await _users.UpdateAsync(user);
-
-            // Clean up setup code
-            await _users.RemoveAuthenticationTokenAsync(user, "EmailTwoFactorSetup", "SetupCode");
 
             // Generate recovery codes
             var recoveryCodes = await _users.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
@@ -606,9 +626,18 @@ namespace sstore.Controllers
                 await _log.LogAuditAsync(
                     "RegisterAttempt",
                     "AuthController",
-                    $"Registration attempt with existing email: {dto.Email}",
+                    $"Registration attempt with existing email",  // Email NICHT loggen!
                     "anonymous");
-                return BadRequest(new { error = "Email already registered" });
+
+                // SECURITY: Return same message to prevent email enumeration
+                await Task.Delay(Random.Shared.Next(100, 300));  // Timing attack mitigation
+
+                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
+                return Ok(new
+                {
+                    message = "Registration successful. Please check your email to verify your account.",
+                    csrfToken = dummyTokens.RequestToken
+                });
             }
 
             // Check if username already exists
@@ -651,10 +680,14 @@ namespace sstore.Controllers
             var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
 
             // Generate a simple 6-digit verification code
-            var verificationCode = new Random().Next(100000, 999999).ToString();
+            var verificationCode = _codeGenerator.GenerateNumericCode(6);
 
-            // Store the code in a way that can be verified later
-            await _users.SetAuthenticationTokenAsync(user, "EmailVerification", "VerificationCode", verificationCode);
+            await _tokenService.StoreTokenAsync(
+                user,
+                "EmailVerification",
+                verificationCode,
+                TimeSpan.FromHours(24)
+            );
 
             // Send verification email
             var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
@@ -684,7 +717,7 @@ namespace sstore.Controllers
             await _log.LogAuditAsync(
                 "RegisterSuccess",
                 "AuthController",
-                $"New user registered: {user.Email}",
+                $"New user registered",
                 user.Email);
 
             // Generate and return new CSRF token
@@ -822,25 +855,26 @@ namespace sstore.Controllers
                 return BadRequest(new { error = "Email already verified" });
             }
 
-            // Verify code
-            var storedCode = await _users.GetAuthenticationTokenAsync(user, "EmailVerification", "VerificationCode");
+            // Validate token with expiration check
+            var isValid = await _tokenService.ValidateAndConsumeTokenAsync(
+                user,
+                "EmailVerification",
+                dto.Code
+            );
 
-            if (string.IsNullOrEmpty(storedCode) || storedCode != dto.Code)
+            if (!isValid)
             {
                 await _log.LogAuditAsync(
                     "VerifyEmailCode",
                     "AuthController",
-                    "Email verification failed - invalid code",
+                    "Email verification failed - invalid or expired code",
                     user.Email ?? user.UserName);
                 return BadRequest(new { error = "Invalid or expired verification code" });
             }
 
-            // Mark email as confirmed
+            // Mark email as confirmed (Code wurde bereits automatisch entfernt)
             user.EmailConfirmed = true;
             await _users.UpdateAsync(user);
-
-            // Clean up verification code
-            await _users.RemoveAuthenticationTokenAsync(user, "EmailVerification", "VerificationCode");
 
             await _log.LogAuditAsync(
                 "VerifyEmailCode",
@@ -904,13 +938,18 @@ namespace sstore.Controllers
             var user = await _users.FindByEmailAsync(dto.Email);
             if (user == null)
             {
-                // Don't reveal if email exists or not for security
                 await _log.LogAuditAsync(
                     "ResendVerification",
                     "AuthController",
-                    $"Verification resend attempted for non-existent email: {dto.Email}",
+                    $"Verification resend attempted for non-existent email",  // no mail logging!
                     "anonymous");
-                return Ok(new { message = "If this email is registered, a verification email will be sent." });
+
+                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
+                return Ok(new
+                {
+                    message = "If this email is registered, a verification email will be sent.",
+                    csrfToken = dummyTokens.RequestToken  // return tokrn on error too!
+                });
             }
 
             if (user.EmailConfirmed)
@@ -927,10 +966,14 @@ namespace sstore.Controllers
             var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
 
             // Generate new 6-digit verification code
-            var verificationCode = new Random().Next(100000, 999999).ToString();
+            var verificationCode = _codeGenerator.GenerateNumericCode(6);
 
-            // Update stored code
-            await _users.SetAuthenticationTokenAsync(user, "EmailVerification", "VerificationCode", verificationCode);
+            await _tokenService.StoreTokenAsync(
+                user,
+                "EmailVerification",
+                verificationCode,
+                TimeSpan.FromHours(24)
+            );
 
             // Send verification email
             var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
@@ -989,9 +1032,14 @@ namespace sstore.Controllers
                 await _log.LogAuditAsync(
                     "ForgotPassword",
                     "AuthController",
-                    $"Password reset attempted for non-existent email: {dto.Email}",
+                    $"Password reset attempted for non-existent email",
                     "anonymous");
-                return Ok(new { message = "If this email is registered, a password reset link will be sent." });
+                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
+                return Ok(new
+                {
+                    message = "If this email is registered, a password reset link will be sent.",
+                    csrfToken = dummyTokens.RequestToken
+                });
             }
 
             if (!user.EmailConfirmed)
@@ -1002,17 +1050,25 @@ namespace sstore.Controllers
                     "Password reset attempted for unconfirmed email",
                     user.Email ?? user.UserName);
                 // Still return generic message for security
-                return Ok(new { message = "If this email is registered, a password reset link will be sent." });
+                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
+                return Ok(new
+                {
+                    message = "If this email is registered, a password reset link will be sent.",
+                    csrfToken = dummyTokens.RequestToken
+                });
             }
 
             // Generate password reset token
             var resetToken = await _users.GeneratePasswordResetTokenAsync(user);
 
-            // Generate 6-digit reset code
-            var resetCode = new Random().Next(100000, 999999).ToString();
-
-            // Store the code
-            await _users.SetAuthenticationTokenAsync(user, "PasswordReset", "ResetCode", resetCode);
+            // Generate secure 6-digit reset code with expiration
+            var resetCode = _codeGenerator.GenerateNumericCode(6);
+            await _tokenService.StoreTokenAsync(
+                user,
+                "PasswordReset",
+                resetCode,
+                TimeSpan.FromMinutes(30)
+            );
 
             // Send password reset email
             var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
@@ -1085,11 +1141,16 @@ namespace sstore.Controllers
             // If token failed or not provided, try code-based reset
             if (!isValid && !string.IsNullOrEmpty(dto.Code))
             {
-                var storedCode = await _users.GetAuthenticationTokenAsync(user, "PasswordReset", "ResetCode");
+                // Validate code with expiration check
+                isValid = await _tokenService.ValidateAndConsumeTokenAsync(
+                    user,
+                    "PasswordReset",
+                    dto.Code
+                );
 
-                if (!string.IsNullOrEmpty(storedCode) && storedCode == dto.Code)
+                if (isValid)
                 {
-                    // Remove password using UserManager and set new one
+                    // Generate new token for password reset
                     var token = await _users.GeneratePasswordResetTokenAsync(user);
                     result = await _users.ResetPasswordAsync(user, token, dto.NewPassword);
                     isValid = result?.Succeeded ?? false;
@@ -1105,9 +1166,6 @@ namespace sstore.Controllers
                     user.Email ?? user.UserName);
                 return BadRequest(new { error = "Invalid or expired reset token/code" });
             }
-
-            // Clean up reset code
-            await _users.RemoveAuthenticationTokenAsync(user, "PasswordReset", "ResetCode");
 
             // Update security stamp to invalidate existing login sessions
             await _users.UpdateSecurityStampAsync(user);
