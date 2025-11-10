@@ -52,10 +52,11 @@ export function registerAdminUsers(route) {
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Name</th>
+                    <th>Username</th>
                     <th>Email</th>
                     <th>2FA</th>
                     <th>Account Status</th>
+                    <th>2fa Enforced</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -231,7 +232,6 @@ function renderUserRow(user) {
         </div>
       </td>
       <td>
-        <div style="display: flex; align-items: center; gap: var(--space-md);">
           <div class="toggle-wrapper">
             <label class="toggle-switch">
               <input 
@@ -244,6 +244,9 @@ function renderUserRow(user) {
             </label>
             <span class="toggle-label">Enforce 2FA</span>
           </div>
+      </td>
+      <td>
+        <div style="display: flex; align-items: center; gap: var(--space-md);">          
           <button class="btn btn-sm btn-danger" data-action="delete" data-method="DELETE" data-id="${user.id}">Delete</button>
         </div>
       </td>

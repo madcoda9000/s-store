@@ -122,8 +122,9 @@
       "chooseMethod": "Wählen Sie Ihre bevorzugte Authentifizierungsmethode:",
       "authenticatorMethod": {
         "title": "Authenticator-App",
-        "description": "Verwenden Sie eine Authenticator-App wie Google Authenticator oder Authy",
+        "description": "Verwenden Sie eine Authenticator-App wie Google Authenticator, Microsoft Authenticator oder Authy",
         "recommended": "Empfohlen",
+        "notRecommended": "Nicht empfohlen",
         "selectButton": "Authenticator-App verwenden"
       },
       "emailMethod": {
@@ -217,7 +218,8 @@
       "email": "E-Mail-Adresse",
       "username": "Benutzername",
       "save": "Änderungen speichern",
-      "saving": "Wird gespeichert..."
+      "saving": "Wird gespeichert...",
+      "2fainfo": "Zwei-Faktor-Authentifizierung"
     },
     "security": {
       "title": "Sicherheit",
@@ -244,7 +246,10 @@
       "successUpadteProfileLogin": "Profil erfolgreich aktualisiert. Weiterleitung zur Anmeldung...",
       "noChangesDetected": "Keine Änderungen erkannt",
       "emailRequired": "E-Mail-Adresse erforderlich",
-      "twoFactorEnforced": "Die Zwei-Faktor-Authentifizierung wird vom Administrator erzwungen und kann nicht deaktiviert werden"
+      "twoFactorEnforced": "Die Zwei-Faktor-Authentifizierung wird vom Administrator erzwungen und kann nicht deaktiviert werden",
+      "twoFactorRecommended": "Die Zwei-Faktor-Authentifizierung ist nicht aktiviert. Es ist dringend Empfohlen, die Zwei-Faktor-Authentifizierung zu aktivieren.",
+      "twoFactorEnabledAlready": "Hervorragend! Ihr Konto ist durch Zwei-Faktor-Authentifizierung geschützt.",
+      "twoFactorDisabledSuccess": "Zwei-Faktor-Authentifizierung erfolgreich deaktiviert"
     },
     "errors": {
       "failedToLoadProfile": "Profil konnte nicht geladen werden"

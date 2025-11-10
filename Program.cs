@@ -369,10 +369,11 @@ async static Task InitializeDatabaseAsync(WebApplication app)
         // Step 3: Create default admin user if it doesn't exist
         var adminEmail = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_EMAIL");
         var adminPassword = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_PASSWORD");
+        var adminUsername = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_USERNAME");
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
-            logger.LogWarning("DEFAULT_ADMIN_EMAIL or DEFAULT_ADMIN_PASSWORD not configured. Skipping admin user creation.");
+            logger.LogWarning("DEFAULT_ADMIN_EMAIL or DEFAULT_ADMIN_PASSWORD not configured and DEFAULT_ADMIN_USERNAME is not set. Skipping admin user creation.");
         }
         else
         {
@@ -384,7 +385,7 @@ async static Task InitializeDatabaseAsync(WebApplication app)
                 
                 var adminUser = new ApplicationUser
                 {
-                    UserName = adminEmail,
+                    UserName = adminUsername,
                     Email = adminEmail,
                     EmailConfirmed = true, // Auto-confirm for default admin
                     CreatedAt = DateTime.UtcNow

@@ -452,7 +452,7 @@ function updateLanguageSelector() {
 
   languageSelector.innerHTML = `
     <button class="profile-btn language-btn" id="language-toggle" type="button" aria-label="Change language">
-      <span style="font-weight: 500; font-size: 0.875rem;" id="language-text">${currentLang.toUpperCase()}</span>
+      <span id="language-text">${currentLang.toUpperCase()}</span>
       ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
     </button>
     <div class="profile-menu" id="language-menu">

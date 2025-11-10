@@ -65,6 +65,8 @@ namespace sstore.Controllers
                 firstName = user.FirstName,
                 lastName = user.LastName,
                 twoFactorEnabled = user.TwoFactorEnabled,
+                twoFactorMethod = user.TwoFactorMethod,
+                twoFactorEnforced = user.TwoFactorEnforced,
                 createdAt = user.CreatedAt,
                 updatedAt = user.UpdatedAt
             });

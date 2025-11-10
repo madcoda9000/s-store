@@ -4,17 +4,16 @@ import { api, setCsrfToken } from "../api.js";
 import { hideHeader, updateHeader } from "../header.js";
 import { icon, Icons } from "../icons.js";
 import { t } from "../i18n.js";
-import { getUserFromState } from "../auth-utils.js";
 
 /**
  * @typedef {Object} Setup2faState
  * @property {'selection'|'authenticator'|'email'|'recovery'|'success'} currentStep
+ * @property {'enforced'|'optional'} mode
  * @property {string|null} selectedMethod
  * @property {string|null} qrCodeUrl
  * @property {string|null} manualKey
  * @property {boolean} codeSent
  * @property {string[]|null} recoveryCodes
- * @property {boolean} isEnforced
  */
 
 /**
@@ -24,187 +23,186 @@ import { getUserFromState } from "../auth-utils.js";
  */
 export function registerSetup2fa(route) {
   route("/setup-2fa", async (el) => {
-    // Check if user is logged in
-    const user = getUserFromState();
-    if (!user) {
-      location.hash = "/login";
-      return;
+    try {
+      // Fetch current user
+      /** @type {User} */
+      const user = await api("/auth/me");
+
+      // Determine mode based on enforcement
+      const isEnforced = user.twoFactorEnforced === 1;
+
+      // Hide header if enforced (user can't navigate away)
+      if (isEnforced) {
+        hideHeader();
+      } else {
+        updateHeader(user);
+      }
+
+      /** @type {Setup2faState} */
+      const state = {
+        currentStep: "selection",
+        mode: isEnforced ? "enforced" : "optional",
+        selectedMethod: null,
+        qrCodeUrl: null,
+        manualKey: null,
+        codeSent: false,
+        recoveryCodes: null,
+      };
+
+      await renderStep(el, state);
+    } catch (err) {
+      const error = /** @type {Error} */ (err);
+
+      if (error.message.includes("Unauthorized") || error.message.includes("401")) {
+        location.hash = "/login";
+        return;
+      }
+
+      el.innerHTML = renderError(error.message);
     }
-
-    // Update header
-    updateHeader(user);
-
-    /** @type {Setup2faState} */
-    const state = {
-      currentStep: 'selection',
-      selectedMethod: null,
-      qrCodeUrl: null,
-      manualKey: null,
-      codeSent: false,
-      recoveryCodes: null,
-      isEnforced: user.twoFactorEnforced === 1
-    };
-
-    renderStep(el, state);
   });
 }
 
 /**
- * Renders the current step of the 2FA setup process
+ * Renders the current step
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function renderStep(el, state) {
+async function renderStep(el, state) {
   switch (state.currentStep) {
-    case 'selection':
+    case "selection":
       renderMethodSelection(el, state);
       break;
-    case 'authenticator':
+    case "authenticator":
       renderAuthenticatorSetup(el, state);
       break;
-    case 'email':
-      renderEmailSetup(el, state);
+    case "email":
+      await renderEmailSetup(el, state);
       break;
-    case 'recovery':
+    case "recovery":
       renderRecoveryCodes(el, state);
       break;
-    case 'success':
+    case "success":
       renderSuccess(el, state);
       break;
   }
 }
 
 /**
- * Renders the method selection screen
+ * Renders method selection screen
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
  * @returns {void}
  */
 function renderMethodSelection(el, state) {
-  el.innerHTML = `
-    <div class="container" style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title">${t('auth.setup2fa.title')}</h1>
-        </div>
-        
-        <div class="card-body">
-          ${state.isEnforced ? `
-            <div class="alert alert-info" style="margin-bottom: 1.5rem;">
-              ${icon(Icons.ALERT_CIRCLE, 'icon')} ${t('auth.setup2fa.enforcedNotice')}
+  const isEnforced = state.mode === "enforced";
+
+  if (isEnforced) {
+    // Enforced mode: Use auth-style centered layout
+    el.innerHTML = `
+      <div class="auth-container">
+        <div class="auth-wrapper">
+          <div class="card auth-card shadow-lg">
+            <div class="auth-header">
+              <h2>${t("auth.setup2fa.title")}</h2>
+              <p">
+              <div class="alert alert-info">  
+                ${t("auth.setup2fa.enforcedNotice")}
+              </div>
+              </p>
             </div>
-          ` : ''}
-          
-          <p class="text-muted" style="margin-bottom: 2rem;">
-            ${t('auth.setup2fa.description')}
-          </p>
-          
-          <h3 style="margin-bottom: 1rem;">${t('auth.setup2fa.chooseMethod')}</h3>
-          
-          <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+            
+            <div class="mb-25">
+              <p class="text-muted">${t("auth.setup2fa.description")}</p>
+            </div>
+            
+            <h4 class="mb-25">${t("auth.setup2fa.chooseMethod")}</h4>
+            
             <!-- Authenticator Method -->
-            <div class="method-card" data-method="authenticator">
-              <div class="method-card-icon">
-                ${icon(Icons.SMARTPHONE, 'icon icon-xl')}
-              </div>
-              <div class="method-card-content">
-                <h4>
-                  ${t('auth.setup2fa.authenticatorMethod.title')}
-                  <span class="badge badge-success">${t('auth.setup2fa.authenticatorMethod.recommended')}</span>
-                </h4>
-                <p class="text-muted">${t('auth.setup2fa.authenticatorMethod.description')}</p>
-                <button type="button" class="btn btn-primary" data-select-method="authenticator">
-                  ${t('auth.setup2fa.authenticatorMethod.selectButton')}
-                </button>
-              </div>
+            <div class="card mb-25">
+              <h4 class="mb-10">
+                ${icon(Icons.SHIELD_CHECK, "icon icon-lg mr-5")}
+                ${t("auth.setup2fa.authenticatorMethod.title")}
+                <span class="badge badge-success ml-10">${t("auth.setup2fa.authenticatorMethod.recommended")}</span>
+              </h4>              
+              <p class="text-muted mb-10">${t("auth.setup2fa.authenticatorMethod.description")}</p>
+              <button type="button" class="btn btn-primary btn-block" data-select-method="authenticator">
+                ${t("auth.setup2fa.authenticatorMethod.selectButton")}
+              </button>
             </div>
             
             <!-- Email Method -->
-            <div class="method-card" data-method="email">
-              <div class="method-card-icon">
-                ${icon(Icons.MAIL, 'icon icon-xl')}
-              </div>
-              <div class="method-card-content">
-                <h4>${t('auth.setup2fa.emailMethod.title')}</h4>
-                <p class="text-muted">${t('auth.setup2fa.emailMethod.description')}</p>
-                <button type="button" class="btn btn-outline" data-select-method="email">
-                  ${t('auth.setup2fa.emailMethod.selectButton')}
-                </button>
-              </div>
+            <div class="card">
+              <h4 class="mb-10">
+                ${icon(Icons.MAIL, "icon icon-lg mr-5")}
+                ${t("auth.setup2fa.emailMethod.title")}
+                <span class="badge badge-warning ml-10">${t("auth.setup2fa.authenticatorMethod.notRecommended")}</span>
+              </h4>
+              <p class="text-muted mb-10">${t("auth.setup2fa.emailMethod.description")}</p>
+              <button type="button" class="btn btn-warning btn-block" data-select-method="email">
+                ${t("auth.setup2fa.emailMethod.selectButton")}
+              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  `;
-
-  // Add styles for method cards
-  const style = document.createElement('style');
-  style.textContent = `
-    .method-card {
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      padding: 1.5rem;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }
-    
-    .method-card:hover {
-      border-color: var(--primary);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transform: translateY(-2px);
-    }
-    
-    .method-card-icon {
-      margin-bottom: 1rem;
-      color: var(--primary);
-    }
-    
-    .method-card-content h4 {
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    
-    .method-card-content p {
-      margin-bottom: 1rem;
-      font-size: 0.875rem;
-    }
-    
-    .method-card button {
-      width: 100%;
-    }
-    
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border-radius: 4px;
-    }
-    
-    .badge-success {
-      background-color: #10b981;
-      color: white;
-    }
-  `;
-  document.head.appendChild(style);
+    `;
+  } else {
+    // Optional mode: Use normal section layout with header
+    el.innerHTML = `
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title mb-0">${t("auth.setup2fa.title")}</h2>
+        </div>
+        
+        <p class="text-muted mb-25">${t("auth.setup2fa.description")}</p>
+        
+        <h4 class="mt-25 mb-25">${t("auth.setup2fa.chooseMethod")}</h4>
+        
+        <div class="grid">
+          <!-- Authenticator Method -->
+          <div class="card">
+            <h4>
+              ${icon(Icons.SHIELD_CHECK, "icon icon-lg mr-5")}
+              ${t("auth.setup2fa.authenticatorMethod.title")}
+              <span class="badge badge-success ml-10">${t("auth.setup2fa.authenticatorMethod.recommended")}</span>
+            </h4>            
+            <p class="text-muted mb-25">${t("auth.setup2fa.authenticatorMethod.description")}</p>
+            <button type="button" class="btn btn-primary btn-block" data-select-method="authenticator">
+              ${t("auth.setup2fa.authenticatorMethod.selectButton")}
+            </button>
+          </div>
+          
+          <!-- Email Method -->
+          <div class="card">
+            <h4>
+              ${icon(Icons.MAIL, "icon icon-lg mr-5")}
+              ${t("auth.setup2fa.emailMethod.title")}
+              <span class="badge badge-warning ml-10">${t("auth.setup2fa.authenticatorMethod.notRecommended")}</span>
+            </h4>
+            <p class="text-muted mb-25">${t("auth.setup2fa.emailMethod.description")}</p>
+            <button type="button" class="btn btn-warning btn-block" data-select-method="email">
+              ${t("auth.setup2fa.emailMethod.selectButton")}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   // Event handlers
-  el.querySelectorAll('[data-select-method]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const method = /** @type {HTMLElement} */ (e.target).getAttribute('data-select-method');
-      if (method === 'authenticator') {
-        state.selectedMethod = 'Authenticator';
-        state.currentStep = 'authenticator';
-        initAuthenticatorSetup(el, state);
-      } else if (method === 'email') {
-        state.selectedMethod = 'Email';
-        state.currentStep = 'email';
-        renderStep(el, state);
+  el.querySelectorAll("[data-select-method]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const method = /** @type {HTMLElement} */ (e.target).closest("button")?.getAttribute("data-select-method");
+      if (method === "authenticator") {
+        state.selectedMethod = "Authenticator";
+        state.currentStep = "authenticator";
+        await initAuthenticatorSetup(el, state);
+      } else if (method === "email") {
+        state.selectedMethod = "Email";
+        state.currentStep = "email";
+        await renderStep(el, state);
       }
     });
   });
@@ -218,8 +216,8 @@ function renderMethodSelection(el, state) {
  */
 async function initAuthenticatorSetup(el, state) {
   try {
-    const response = await api('/auth/2fa/setup-authenticator', {
-      method: 'POST'
+    const response = await api("/auth/2fa/setup-authenticator", {
+      method: "POST",
     });
 
     if (response.csrfToken) {
@@ -228,93 +226,97 @@ async function initAuthenticatorSetup(el, state) {
 
     state.qrCodeUrl = response.otpauth;
     state.manualKey = response.key;
-    renderStep(el, state);
+    await renderStep(el, state);
   } catch (err) {
     const error = /** @type {Error} */ (err);
-    alert(error.message || t('auth.setup2fa.errors.setupFailed'));
-    state.currentStep = 'selection';
-    renderStep(el, state);
+    alert(error.message || t("auth.setup2fa.errors.setupFailed"));
+    state.currentStep = "selection";
+    await renderStep(el, state);
   }
 }
 
 /**
- * Renders the authenticator setup screen
+ * Renders authenticator setup screen
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
  * @returns {void}
  */
 function renderAuthenticatorSetup(el, state) {
+  const showBackButton = state.mode === "optional";
+  const containerClass = state.mode === "enforced" ? "auth-container" : "container";
+
   el.innerHTML = `
-    <div class="container" style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title">${t('auth.setup2fa.authenticatorSetup.title')}</h1>
-        </div>
-        
-        <div class="card-body">
+    <div class="${containerClass}">
+      <div class="auth-wrapper">
+        <div class="card auth-card shadow-lg">
+          <div class="auth-header">
+            <h2>${t("auth.setup2fa.authenticatorSetup.title")}</h2>
+          </div>
+          
           <!-- Step 1: QR Code -->
-          <div style="margin-bottom: 2rem;">
-            <h3 style="margin-bottom: 0.5rem;">${t('auth.setup2fa.authenticatorSetup.step1')}</h3>
-            <p class="text-muted" style="margin-bottom: 1rem;">
-              ${t('auth.setup2fa.authenticatorSetup.step1Description')}
-            </p>
+          <div class="mb-25">
+            <h4 class="mb-10">${t("auth.setup2fa.authenticatorSetup.step1")}</h4>
+            <p class="text-muted mb-25">${t("auth.setup2fa.authenticatorSetup.step1Description")}</p>
             
-            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-              <div id="qr-code" style="padding: 1rem; background: white; border-radius: 8px; border: 2px solid var(--border-color);"></div>
+            <div class="text-center mb-25">
+              <div id="qr-code" class="card d-inline-block p-25"></div>
             </div>
             
-            <p class="text-muted" style="margin-bottom: 0.5rem;">
-              ${t('auth.setup2fa.authenticatorSetup.step1Alt')}
-            </p>
+            <p class="text-muted mb-10">${t("auth.setup2fa.authenticatorSetup.step1Alt")}</p>
             <div class="form-group">
-              <div class="input-group">
+              <div class="input-with-actions">
                 <input 
                   type="text" 
                   id="manual-key" 
                   class="input" 
-                  value="${state.manualKey || ''}" 
+                  value="${escapeHtml(state.manualKey || "")}" 
                   readonly
-                  style="font-family: monospace; font-size: 0.875rem;">
-                <button type="button" class="btn btn-outline" id="copy-key-btn">
-                  ${icon(Icons.COPY, 'icon')} ${t('auth.setup2fa.authenticatorSetup.copyKey')}
+                />
+                <button type="button" class="input-action-btn" id="copy-key-btn" aria-label="${t(
+                  "auth.setup2fa.authenticatorSetup.copyKey"
+                )}">
+                  ${icon(Icons.COPY)}
                 </button>
               </div>
             </div>
           </div>
           
-          <div class="divider"></div>
-          
           <!-- Step 2: Verify -->
           <div>
-            <h3 style="margin-bottom: 0.5rem;">${t('auth.setup2fa.authenticatorSetup.step2')}</h3>
-            <p class="text-muted" style="margin-bottom: 1rem;">
-              ${t('auth.setup2fa.authenticatorSetup.step2Description')}
-            </p>
+            <h4 class="mb-10">${t("auth.setup2fa.authenticatorSetup.step2")}</h4>
+            <p class="text-muted mb-25">${t("auth.setup2fa.authenticatorSetup.step2Description")}</p>
             
-            <form id="verify-authenticator-form">
+            <form id="verify-authenticator-form" class="form">
               <div class="form-group">
-                <label class="label" for="code">${t('auth.setup2fa.authenticatorSetup.code')}</label>
+                <label class="label" for="code">${t("auth.setup2fa.authenticatorSetup.code")}</label>
                 <input 
                   type="text" 
                   id="code" 
                   name="code"
                   class="input" 
-                  placeholder="${t('auth.setup2fa.authenticatorSetup.codePlaceholder')}"
+                  placeholder="${t("auth.setup2fa.authenticatorSetup.codePlaceholder")}"
                   maxlength="6"
                   pattern="[0-9]{6}"
                   inputmode="numeric"
                   autocomplete="one-time-code"
-                  required>
+                  required
+                />
               </div>
               
               <div id="verify-error" class="error hidden"></div>
               
-              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-outline" id="back-btn">
-                  ${icon(Icons.ARROW_LEFT, 'icon')} ${t('auth.setup2fa.authenticatorSetup.backButton')}
-                </button>
-                <button type="submit" class="btn btn-primary" style="flex: 1;">
-                  ${t('auth.setup2fa.authenticatorSetup.verifyButton')}
+              <div class="button-group">
+                ${
+                  showBackButton
+                    ? `
+                  <button type="button" class="btn btn-secondary" id="back-btn">
+                    ${icon(Icons.ARROW_LEFT, "icon")} ${t("auth.setup2fa.authenticatorSetup.backButton")}
+                  </button>
+                `
+                    : ""
+                }
+                <button type="submit" class="btn btn-primary flex-1">
+                  ${t("auth.setup2fa.authenticatorSetup.verifyButton")}
                 </button>
               </div>
             </form>
@@ -325,75 +327,69 @@ function renderAuthenticatorSetup(el, state) {
   `;
 
   // Generate QR code
-  const qrContainer = el.querySelector('#qr-code');
+  const qrContainer = el.querySelector("#qr-code");
   if (qrContainer && state.qrCodeUrl) {
-    // Use a simple QR code library via CDN or generate manually
-    // For simplicity, I'll show the URL that can be converted to QR
-    // In production, use qrcode.js or similar
-    const qr = document.createElement('img');
+    const qr = document.createElement("img");
     qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(state.qrCodeUrl)}`;
-    qr.alt = 'QR Code';
-    qr.style.maxWidth = '200px';
+    qr.alt = "QR Code";
+    qr.style.maxWidth = "200px";
     qrContainer.appendChild(qr);
   }
 
   // Copy key handler
-  const copyBtn = el.querySelector('#copy-key-btn');
+  const copyBtn = el.querySelector("#copy-key-btn");
   if (copyBtn) {
-    copyBtn.addEventListener('click', async () => {
-      const keyInput = /** @type {HTMLInputElement} */ (el.querySelector('#manual-key'));
+    copyBtn.addEventListener("click", async () => {
+      const keyInput = /** @type {HTMLInputElement} */ (el.querySelector("#manual-key"));
       if (keyInput) {
         try {
           await navigator.clipboard.writeText(keyInput.value);
-          copyBtn.innerHTML = `${icon(Icons.CHECK, 'icon')} ${t('auth.setup2fa.authenticatorSetup.keyCopied')}`;
+          copyBtn.innerHTML = icon(Icons.CHECK);
           setTimeout(() => {
-            copyBtn.innerHTML = `${icon(Icons.COPY, 'icon')} ${t('auth.setup2fa.authenticatorSetup.copyKey')}`;
+            copyBtn.innerHTML = icon(Icons.COPY);
           }, 2000);
-        } catch (err) {
-          // Fallback for older browsers
+        } catch {
           keyInput.select();
-          document.execCommand('copy');
-          copyBtn.innerHTML = `${icon(Icons.CHECK, 'icon')} ${t('auth.setup2fa.authenticatorSetup.keyCopied')}`;
-          setTimeout(() => {
-            copyBtn.innerHTML = `${icon(Icons.COPY, 'icon')} ${t('auth.setup2fa.authenticatorSetup.copyKey')}`;
-          }, 2000);
+          document.execCommand("copy");
         }
       }
     });
   }
 
-  // Back button
-  const backBtn = el.querySelector('#back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      state.currentStep = 'selection';
-      state.selectedMethod = null;
-      state.qrCodeUrl = null;
-      state.manualKey = null;
-      renderStep(el, state);
-    });
+  // Back button (only in optional mode)
+  if (showBackButton) {
+    const backBtn = el.querySelector("#back-btn");
+    if (backBtn) {
+      backBtn.addEventListener("click", async () => {
+        state.currentStep = "selection";
+        state.selectedMethod = null;
+        state.qrCodeUrl = null;
+        state.manualKey = null;
+        await renderStep(el, state);
+      });
+    }
   }
 
   // Form submission
-  const form = /** @type {HTMLFormElement} */ (el.querySelector('#verify-authenticator-form'));
-  const errorEl = /** @type {HTMLElement} */ (el.querySelector('#verify-error'));
+  const form = /** @type {HTMLFormElement} */ (el.querySelector("#verify-authenticator-form"));
+  const errorEl = /** @type {HTMLElement} */ (el.querySelector("#verify-error"));
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    errorEl.classList.add('hidden');
+    errorEl.classList.add("hidden");
 
     const formData = new FormData(form);
-    const code = formData.get('code')?.toString() || '';
+    const code = formData.get("code")?.toString() || "";
 
     const submitBtn = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = t('auth.setup2fa.authenticatorSetup.verifying');
+    submitBtn.innerHTML = t("auth.setup2fa.authenticatorSetup.verifying");
 
     try {
-      const response = await api('/auth/2fa/verify-authenticator-setup', {
-        method: 'POST',
-        body: { Code: code }  // Backend expects uppercase 'Code'
+      const response = await api("/auth/2fa/verify-authenticator-setup", {
+        method: "POST",
+        body: { Code: code },
       });
 
       if (response.csrfToken) {
@@ -401,12 +397,12 @@ function renderAuthenticatorSetup(el, state) {
       }
 
       state.recoveryCodes = response.recoveryCodes;
-      state.currentStep = 'recovery';
-      renderStep(el, state);
+      state.currentStep = "recovery";
+      await renderStep(el, state);
     } catch (err) {
       const error = /** @type {Error} */ (err);
-      errorEl.textContent = error.message || t('auth.setup2fa.errors.invalidCode');
-      errorEl.classList.remove('hidden');
+      errorEl.textContent = error.message || t("auth.setup2fa.errors.invalidCode");
+      errorEl.classList.remove("hidden");
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
     }
@@ -414,119 +410,141 @@ function renderAuthenticatorSetup(el, state) {
 }
 
 /**
- * Renders the email setup screen
+ * Renders email setup screen
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function renderEmailSetup(el, state) {
+async function renderEmailSetup(el, state) {
+  const showBackButton = state.mode === "optional";
+  const containerClass = state.mode === "enforced" ? "auth-container" : "container";
+
+  // Fetch user email for display
+  let userEmail = "";
+  try {
+    const user = await api("/auth/me");
+    userEmail = user.email || "";
+  } catch {
+    userEmail = "";
+  }
+
   el.innerHTML = `
-    <div class="container" style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title">${t('auth.setup2fa.emailSetup.title')}</h1>
-        </div>
-        
-        <div class="card-body">
-          ${!state.codeSent ? `
+    <div class="${containerClass}">
+      <div class="auth-wrapper">
+        <div class="card auth-card shadow-lg">
+          <div class="auth-header">
+            <h2>${t("auth.setup2fa.emailSetup.title")}</h2>
+          </div>
+          
+          ${
+            !state.codeSent
+              ? `
             <!-- Step 1: Request Code -->
             <div>
-              <h3 style="margin-bottom: 0.5rem;">${t('auth.setup2fa.emailSetup.step1')}</h3>
-              <p class="text-muted" style="margin-bottom: 1rem;">
-                ${t('auth.setup2fa.emailSetup.step1Description')}
-              </p>
+              <h4 class="mb-10">${t("auth.setup2fa.emailSetup.step1")}</h4>
+              <p class="text-muted mb-25">${t("auth.setup2fa.emailSetup.step1Description")}</p>
               
               <div class="form-group">
                 <input 
                   type="email" 
                   class="input" 
-                  value="${getUserFromState()?.email || ''}" 
-                  disabled>
+                  value="${escapeHtml(userEmail)}" 
+                  disabled
+                />
               </div>
               
               <div id="send-error" class="error hidden"></div>
               
-              <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-outline" id="back-btn">
-                  ${icon(Icons.ARROW_LEFT, 'icon')} ${t('auth.setup2fa.emailSetup.backButton')}
-                </button>
-                <button type="button" class="btn btn-primary" id="send-code-btn" style="flex: 1;">
-                  ${t('auth.setup2fa.emailSetup.sendCodeButton')}
+              <div class="button-group">
+                ${
+                  showBackButton
+                    ? `
+                  <button type="button" class="btn btn-secondary" id="back-btn">
+                    ${icon(Icons.ARROW_LEFT, "icon")} ${t("auth.setup2fa.emailSetup.backButton")}
+                  </button>
+                `
+                    : ""
+                }
+                <button type="button" class="btn btn-primary flex-1 mt-25" id="send-code-btn">
+                  ${t("auth.setup2fa.emailSetup.sendCodeButton")}
                 </button>
               </div>
             </div>
-          ` : `
+          `
+              : `
             <!-- Step 2: Verify Code -->
             <div>
-              <div class="alert alert-success" style="margin-bottom: 1.5rem;">
-                ${icon(Icons.MAIL, 'icon')} ${t('auth.setup2fa.emailSetup.codeSent')}
+              <div class="alert alert-success mb-25">
+                ${icon(Icons.MAIL, "icon")} ${t("auth.setup2fa.emailSetup.codeSent")}
               </div>
               
-              <h3 style="margin-bottom: 0.5rem;">${t('auth.setup2fa.emailSetup.step2')}</h3>
-              <p class="text-muted" style="margin-bottom: 1rem;">
-                ${t('auth.setup2fa.emailSetup.step2Description')}
-              </p>
+              <h4 class="mb-10">${t("auth.setup2fa.emailSetup.step2")}</h4>
+              <p class="text-muted mb-25">${t("auth.setup2fa.emailSetup.step2Description")}</p>
               
-              <form id="verify-email-form">
+              <form id="verify-email-form" class="form">
                 <div class="form-group">
-                  <label class="label" for="code">${t('auth.setup2fa.emailSetup.code')}</label>
+                  <label class="label" for="code">${t("auth.setup2fa.emailSetup.code")}</label>
                   <input 
                     type="text" 
                     id="code" 
                     name="code"
                     class="input" 
-                    placeholder="${t('auth.setup2fa.emailSetup.codePlaceholder')}"
+                    placeholder="${t("auth.setup2fa.emailSetup.codePlaceholder")}"
                     maxlength="6"
                     pattern="[0-9]{6}"
                     inputmode="numeric"
                     autocomplete="one-time-code"
-                    required>
+                    required
+                  />
                 </div>
                 
                 <div id="verify-error" class="error hidden"></div>
                 
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                  <button type="button" class="btn btn-outline" id="resend-btn">
-                    ${icon(Icons.REFRESH_CW, 'icon')} ${t('auth.setup2fa.emailSetup.resendButton')}
+                <div class="button-group">
+                  <button type="button" class="btn btn-secondary" id="resend-btn">
+                    ${icon(Icons.REFRESH_CW, "icon")} ${t("auth.setup2fa.emailSetup.resendButton")}
                   </button>
-                  <button type="submit" class="btn btn-primary" style="flex: 1;">
-                    ${t('auth.setup2fa.emailSetup.verifyButton')}
+                  <button type="submit" class="btn btn-primary flex-1">
+                    ${t("auth.setup2fa.emailSetup.verifyButton")}
                   </button>
                 </div>
               </form>
             </div>
-          `}
+          `
+          }
         </div>
       </div>
     </div>
   `;
 
-  // Back button (step 1)
-  const backBtn = el.querySelector('#back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      state.currentStep = 'selection';
-      state.selectedMethod = null;
-      state.codeSent = false;
-      renderStep(el, state);
-    });
+  // Back button (step 1, only in optional mode)
+  if (!state.codeSent && showBackButton) {
+    const backBtn = el.querySelector("#back-btn");
+    if (backBtn) {
+      backBtn.addEventListener("click", async () => {
+        state.currentStep = "selection";
+        state.selectedMethod = null;
+        state.codeSent = false;
+        await renderStep(el, state);
+      });
+    }
   }
 
   // Send code button (step 1)
-  const sendBtn = el.querySelector('#send-code-btn');
+  const sendBtn = el.querySelector("#send-code-btn");
   if (sendBtn) {
-    sendBtn.addEventListener('click', async () => {
-      const errorEl = /** @type {HTMLElement} */ (el.querySelector('#send-error'));
-      errorEl.classList.add('hidden');
+    sendBtn.addEventListener("click", async () => {
+      const errorEl = /** @type {HTMLElement} */ (el.querySelector("#send-error"));
+      errorEl.classList.add("hidden");
 
       const btn = /** @type {HTMLButtonElement} */ (sendBtn);
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = t('auth.setup2fa.emailSetup.sending');
+      btn.innerHTML = t("auth.setup2fa.emailSetup.sending");
 
       try {
-        const response = await api('/auth/2fa/setup-email', {
-          method: 'POST'
+        const response = await api("/auth/2fa/setup-email", {
+          method: "POST",
         });
 
         if (response.csrfToken) {
@@ -534,11 +552,11 @@ function renderEmailSetup(el, state) {
         }
 
         state.codeSent = true;
-        renderStep(el, state);
+        await renderStep(el, state);
       } catch (err) {
         const error = /** @type {Error} */ (err);
-        errorEl.textContent = error.message || t('auth.setup2fa.errors.emailSendFailed');
-        errorEl.classList.remove('hidden');
+        errorEl.textContent = error.message || t("auth.setup2fa.errors.emailSendFailed");
+        errorEl.classList.remove("hidden");
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
@@ -546,29 +564,29 @@ function renderEmailSetup(el, state) {
   }
 
   // Resend button (step 2)
-  const resendBtn = el.querySelector('#resend-btn');
+  const resendBtn = el.querySelector("#resend-btn");
   if (resendBtn) {
-    resendBtn.addEventListener('click', async () => {
+    resendBtn.addEventListener("click", async () => {
       const btn = /** @type {HTMLButtonElement} */ (resendBtn);
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = t('auth.setup2fa.emailSetup.sending');
+      btn.innerHTML = t("auth.setup2fa.emailSetup.sending");
 
       try {
-        const response = await api('/auth/2fa/setup-email', {
-          method: 'POST'
+        const response = await api("/auth/2fa/setup-email", {
+          method: "POST",
         });
 
         if (response.csrfToken) {
           setCsrfToken(response.csrfToken);
         }
 
-        btn.innerHTML = `${icon(Icons.CHECK, 'icon')} ${t('auth.setup2fa.emailSetup.codeSent')}`;
+        btn.innerHTML = `${icon(Icons.CHECK, "icon")} ${t("auth.setup2fa.emailSetup.codeSent")}`;
         setTimeout(() => {
           btn.disabled = false;
           btn.innerHTML = originalText;
         }, 3000);
-      } catch (err) {
+      } catch {
         btn.disabled = false;
         btn.innerHTML = originalText;
       }
@@ -576,26 +594,26 @@ function renderEmailSetup(el, state) {
   }
 
   // Verify form (step 2)
-  const form = /** @type {HTMLFormElement|null} */ (el.querySelector('#verify-email-form'));
+  const form = /** @type {HTMLFormElement|null} */ (el.querySelector("#verify-email-form"));
   if (form) {
-    const errorEl = /** @type {HTMLElement} */ (el.querySelector('#verify-error'));
+    const errorEl = /** @type {HTMLElement} */ (el.querySelector("#verify-error"));
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      errorEl.classList.add('hidden');
+      errorEl.classList.add("hidden");
 
       const formData = new FormData(form);
-      const code = formData.get('code')?.toString() || '';
+      const code = formData.get("code")?.toString() || "";
 
       const submitBtn = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
       const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = t('auth.setup2fa.emailSetup.verifying');
+      submitBtn.innerHTML = t("auth.setup2fa.emailSetup.verifying");
 
       try {
-        const response = await api('/auth/2fa/verify-email-setup', {
-          method: 'POST',
-          body: { Code: code }  // Backend expects uppercase 'Code'
+        const response = await api("/auth/2fa/verify-email-setup", {
+          method: "POST",
+          body: { Code: code },
         });
 
         if (response.csrfToken) {
@@ -603,12 +621,12 @@ function renderEmailSetup(el, state) {
         }
 
         state.recoveryCodes = response.recoveryCodes;
-        state.currentStep = 'recovery';
-        renderStep(el, state);
+        state.currentStep = "recovery";
+        await renderStep(el, state);
       } catch (err) {
         const error = /** @type {Error} */ (err);
-        errorEl.textContent = error.message || t('auth.setup2fa.errors.invalidCode');
-        errorEl.classList.remove('hidden');
+        errorEl.textContent = error.message || t("auth.setup2fa.errors.invalidCode");
+        errorEl.classList.remove("hidden");
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
       }
@@ -617,50 +635,47 @@ function renderEmailSetup(el, state) {
 }
 
 /**
- * Renders the recovery codes screen
+ * Renders recovery codes screen
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
  * @returns {void}
  */
 function renderRecoveryCodes(el, state) {
-  const codesText = (state.recoveryCodes || []).join('\n');
-  
+  const codesText = (state.recoveryCodes || []).join("\n");
+  const containerClass = state.mode === "enforced" ? "auth-container" : "container";
+
   el.innerHTML = `
-    <div class="container" style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-      <div class="card">
-        <div class="card-header">
-          <h1 class="card-title">${t('auth.setup2fa.recoveryCodes.title')}</h1>
-        </div>
-        
-        <div class="card-body">
-          <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-            ${icon(Icons.ALERT_TRIANGLE, 'icon')} <strong>${t('auth.setup2fa.recoveryCodes.warning')}</strong>
+    <div class="${containerClass}">
+      <div class="auth-wrapper">
+        <div class="card auth-card shadow-lg">
+          <div class="auth-header">
+            <h2>${t("auth.setup2fa.recoveryCodes.title")}</h2>
           </div>
           
-          <p class="text-muted" style="margin-bottom: 1.5rem;">
-            ${t('auth.setup2fa.recoveryCodes.description')}
-          </p>
-          
-          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 1rem; margin-bottom: 1.5rem;">
-            <pre style="margin: 0; font-family: monospace; font-size: 0.875rem; white-space: pre-wrap; word-break: break-all;">${codesText}</pre>
+          <div class="alert alert-warning mb-25">
+            ${icon(Icons.ALERT_TRIANGLE, "icon")} <strong>${t("auth.setup2fa.recoveryCodes.warning")}</strong>
           </div>
           
-          <div style="display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 1.5rem;">
-            <button type="button" class="btn btn-outline" id="copy-codes-btn">
-              ${icon(Icons.COPY, 'icon')} ${t('auth.setup2fa.recoveryCodes.copyButton')}
-            </button>
-            <button type="button" class="btn btn-outline" id="download-codes-btn">
-              ${icon(Icons.DOWNLOAD, 'icon')} ${t('auth.setup2fa.recoveryCodes.downloadButton')}
-            </button>
-            <button type="button" class="btn btn-outline" id="print-codes-btn">
-              ${icon(Icons.PRINTER, 'icon')} ${t('auth.setup2fa.recoveryCodes.printButton')}
-            </button>
+          <p class="text-muted mb-25">${t("auth.setup2fa.recoveryCodes.description")}</p>
+          
+          <div class="card mb-25">
+            <pre class="code-block">${escapeHtml(codesText)}</pre>
           </div>
           
-          <div class="divider"></div>
+          <div class="button-group mb-25">
+            <button type="button" class="btn btn-secondary" id="copy-codes-btn">
+              ${icon(Icons.COPY, "icon")} ${t("auth.setup2fa.recoveryCodes.copyButton")}
+            </button>
+            <button type="button" class="btn btn-secondary" id="download-codes-btn">
+              ${icon(Icons.DOWNLOAD, "icon")} ${t("auth.setup2fa.recoveryCodes.downloadButton")}
+            </button>
+            <button type="button" class="btn btn-secondary" id="print-codes-btn">
+              ${icon(Icons.PRINTER, "icon")} ${t("auth.setup2fa.recoveryCodes.printButton")}
+            </button>
+          </div>
           
           <button type="button" class="btn btn-primary btn-block" id="confirm-btn">
-            ${t('auth.setup2fa.recoveryCodes.confirmButton')}
+            ${t("auth.setup2fa.recoveryCodes.confirmButton")}
           </button>
         </div>
       </div>
@@ -668,40 +683,40 @@ function renderRecoveryCodes(el, state) {
   `;
 
   // Copy codes
-  const copyBtn = el.querySelector('#copy-codes-btn');
+  const copyBtn = el.querySelector("#copy-codes-btn");
   if (copyBtn) {
-    copyBtn.addEventListener('click', async () => {
+    copyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(codesText);
-        copyBtn.innerHTML = `${icon(Icons.CHECK, 'icon')} ${t('auth.setup2fa.recoveryCodes.copied')}`;
+        copyBtn.innerHTML = `${icon(Icons.CHECK, "icon")} ${t("auth.setup2fa.recoveryCodes.copied")}`;
         setTimeout(() => {
-          copyBtn.innerHTML = `${icon(Icons.COPY, 'icon')} ${t('auth.setup2fa.recoveryCodes.copyButton')}`;
+          copyBtn.innerHTML = `${icon(Icons.COPY, "icon")} ${t("auth.setup2fa.recoveryCodes.copyButton")}`;
         }, 2000);
       } catch (err) {
-        console.error('Failed to copy:', err);
+        console.error("Failed to copy:", err);
       }
     });
   }
 
   // Download codes
-  const downloadBtn = el.querySelector('#download-codes-btn');
+  const downloadBtn = el.querySelector("#download-codes-btn");
   if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      const blob = new Blob([codesText], { type: 'text/plain' });
+    downloadBtn.addEventListener("click", () => {
+      const blob = new Blob([codesText], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `s-store-recovery-codes-${new Date().toISOString().split('T')[0]}.txt`;
+      a.download = `s-store-recovery-codes-${new Date().toISOString().split("T")[0]}.txt`;
       a.click();
       URL.revokeObjectURL(url);
     });
   }
 
   // Print codes
-  const printBtn = el.querySelector('#print-codes-btn');
+  const printBtn = el.querySelector("#print-codes-btn");
   if (printBtn) {
-    printBtn.addEventListener('click', () => {
-      const printWindow = window.open('', '', 'width=600,height=400');
+    printBtn.addEventListener("click", () => {
+      const printWindow = window.open("", "", "width=600,height=400");
       if (printWindow) {
         printWindow.document.write(`
           <html>
@@ -716,7 +731,7 @@ function renderRecoveryCodes(el, state) {
             <body>
               <h1>S-Store Recovery Codes</h1>
               <p>Keep these codes in a safe place!</p>
-              <pre>${codesText}</pre>
+              <pre>${escapeHtml(codesText)}</pre>
             </body>
           </html>
         `);
@@ -727,41 +742,44 @@ function renderRecoveryCodes(el, state) {
   }
 
   // Confirm button
-  const confirmBtn = el.querySelector('#confirm-btn');
+  const confirmBtn = el.querySelector("#confirm-btn");
   if (confirmBtn) {
-    confirmBtn.addEventListener('click', () => {
-      state.currentStep = 'success';
-      renderStep(el, state);
+    confirmBtn.addEventListener("click", async () => {
+      state.currentStep = "success";
+      await renderStep(el, state);
     });
   }
 }
 
 /**
- * Renders the success screen
+ * Renders success screen
  * @param {HTMLElement} el - Container element
  * @param {Setup2faState} state - Current state
  * @returns {void}
  */
 function renderSuccess(el, state) {
+  const containerClass = state.mode === "enforced" ? "auth-container" : "container";
+
   el.innerHTML = `
-    <div class="container" style="max-width: 600px; margin: 2rem auto; padding: 0 1rem;">
-      <div class="card">
-        <div class="card-body" style="text-align: center; padding: 3rem 2rem;">
-          <div style="color: var(--success); margin-bottom: 1.5rem;">
-            ${icon(Icons.CHECK_CIRCLE, 'icon', '64')}
+    <div class="${containerClass}">
+      <div class="auth-wrapper">
+        <div class="card auth-card shadow-lg text-center">
+          <div class="mb-25 text-success">
+            ${icon(Icons.CHECK_CIRCLE, "icon icon-xl")}
           </div>
           
-          <h1 style="margin-bottom: 0.5rem;">${t('auth.setup2fa.success.title')}</h1>
-          <p class="text-muted" style="margin-bottom: 1rem;">
-            ${t('auth.setup2fa.success.description')}
-          </p>
+          <h2 class="mb-10">${t("auth.setup2fa.success.title")}</h2>
+          <p class="text-muted mb-25">${t("auth.setup2fa.success.description")}</p>
           
-          <div style="display: inline-block; padding: 0.5rem 1rem; background: var(--bg-secondary); border-radius: 4px; margin-bottom: 2rem;">
-            <strong>${t('auth.setup2fa.success.methodEnabled', { method: state.selectedMethod })}</strong>
+          <div class="card mb-25">
+            <strong>${t("auth.setup2fa.success.methodEnabled").replace(
+              "{{method}}",
+              state.selectedMethod || ""
+            )}</strong>
           </div>
           
           <button type="button" class="btn btn-primary btn-block" id="continue-btn">
-            ${t('auth.setup2fa.success.continueButton')}
+            ${t("auth.setup2fa.success.continueButton")}
           </button>
         </div>
       </div>
@@ -769,10 +787,45 @@ function renderSuccess(el, state) {
   `;
 
   // Continue button
-  const continueBtn = el.querySelector('#continue-btn');
+  const continueBtn = el.querySelector("#continue-btn");
   if (continueBtn) {
-    continueBtn.addEventListener('click', () => {
-      location.hash = '/home';
+    continueBtn.addEventListener("click", () => {
+      location.hash = "/home";
     });
   }
+}
+
+/**
+ * Renders error message
+ * @param {string} message - Error message
+ * @returns {string} HTML string
+ */
+function renderError(message) {
+  return `
+    <div class="section">
+      <div class="alert alert-danger">
+        <strong>${t("errors.generic")}</strong> ${escapeHtml(message)}
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Escapes HTML to prevent XSS
+ * @param {string|null|undefined} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHtml(str) {
+  if (!str) return "";
+  return str.replace(/[&<>"']/g, (char) => {
+    /** @type {Record<string, string>} */
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return map[char];
+  });
 }

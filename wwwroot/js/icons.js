@@ -50,7 +50,17 @@ export const Icons = {
   MAIL: 'mail',
   CALENDAR: 'calendar',
   
-  // Alerts
+  // Alerts & Status
   ALERT_CIRCLE: 'alert-circle',
-  INFO: 'info'
+  ALERT_TRIANGLE: 'alert-triangle',
+  INFO: 'info',
+  CHECK_CIRCLE: 'check-circle',
+  
+  // File operations
+  DOWNLOAD: 'download',
+  PRINTER: 'printer',
+  
+  // Actions & Navigation
+  ARROW_LEFT: 'arrow-left',
+  REFRESH_CW: 'refresh-cw'
 };

@@ -30,16 +30,19 @@
   --color-primary-light: #e0e7ff;
 
   --color-accent: #1e3a8a;
-  --color-accent-hover: #1e40af;
+  --color-accent-hover: #2e51c4;
   --color-accent-light: #dbeafe;
 
   --color-success: #059669;
+  --color-success-hover: #04d493;
   --color-success-light: #d1fae5;
 
   --color-danger: #dc2626;
+  --color-danger-hover: #f53939;
   --color-danger-light: #fee2e2;
 
   --color-warning: #d97706;
+  --color-warning-hover: #fc9c2f;
   --color-warning-light: #fef3c7;
 
   --color-info: #0891b2;
@@ -399,10 +402,31 @@ strong {
   border-color: var(--color-success);
 }
 
+.btn-success:hover:not(:disabled) {
+  background: var(--color-success-hover);
+  border-color: var(--color-success-hover);
+}
+
+.btn-warning {
+  color: white;
+  background: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: var(--color-warning-hover);
+  border-color: var(--color-warning-hover);
+}
+
 .btn-danger {
   color: white;
   background: var(--color-danger);
   border-color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-danger-hover);
+  border-color: var(--color-danger-hover);
 }
 
 .btn-outline {
@@ -1024,6 +1048,10 @@ table.grid tbody tr:hover {
   font-weight: 500;
 }
 
+#language-text {
+  font-weight: 500; font-size: 0.875rem;
+}
+
 .profile-avatar {
   width: 32px;
   height: 32px;
@@ -1211,6 +1239,83 @@ table.grid tbody tr:hover {
 }
 .ml-10 {
   margin-left:10px;
+}
+.mt-25 {
+  margin-top:25px;
+}
+
+.mb-25 {
+  margin-bottom:25px;
+}
+
+.mr-25 {
+  margin-right:25px;
+}
+
+.ml-25 {
+  margin-left:25px;
+}
+.pt-25 {
+  padding-top:25px;
+}
+
+.pb-25 {
+  padding-bottom:25px;
+}
+
+.pr-25 {
+  padding-right:25px;
+}
+
+.pl-25 {
+  padding-left:25px;
+}
+
+.d-blcok {
+  display: block;
+}
+
+.d-none {
+  display: none;
+}
+
+.d-flex {
+  display: flex;
+}
+.d-inline-block {
+  display: inline-block;
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-info {
+  color: var(--color-info);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.code-block {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 /* === SPINNER === */

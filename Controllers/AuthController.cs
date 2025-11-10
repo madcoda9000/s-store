@@ -546,7 +546,7 @@ namespace sstore.Controllers
         }
 
         /// <summary>
-        /// Disables two-factor authentication for the current user
+        /// Disables two-factor authentication for the current logged on user
         /// </summary>
         /// <returns>Result indicating success</returns>
         [Authorize]

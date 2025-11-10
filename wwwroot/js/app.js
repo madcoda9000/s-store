@@ -1,4 +1,4 @@
-import { start, route } from '/js/router.js';
+import { start, route, set2FAGuard } from '/js/router.js';
 import { api, initCsrfToken } from '/js/api.js';
 import { logger } from '/js/logger.js';
 import { initI18n } from '/js/i18n.js';
@@ -17,12 +17,25 @@ import { icon, Icons } from '/js/icons.js';
 
 /**
  * Checks if the user is authenticated by calling the /auth/me endpoint
- * @returns {Promise<boolean>} true if authenticated, false otherwise
+ * @returns {Promise<User|null>} User object if authenticated, null otherwise
  */
 export async function checkAuth() {
   try {
-    await api('/auth/me');
-    return true;
+    const user = await api('/auth/me');
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Checks if user needs to setup 2FA (enforced but not enabled)
+ * @returns {Promise<boolean>} true if 2FA setup is required
+ */
+export async function requires2FASetup() {
+  try {
+    const user = await api('/auth/me');
+    return user.twoFactorEnforced === 1 && !user.twoFactorEnabled;
   } catch {
     return false;
   }
@@ -156,6 +169,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Setup automatic token refresh on page visibility
   setupTokenRefresh();
+  
+  // Register 2FA guard before starting router
+  set2FAGuard(requires2FASetup);
   
   // Start the router AFTER i18n and CSRF token are initialized
   start();
