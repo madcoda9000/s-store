@@ -157,6 +157,28 @@ builder.Services.AddAntiforgery(o =>
 
 builder.Services.AddControllers(); // reines JSON
 
+// CORS Configuration - only if frontend is on different origin
+var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',')
+    ?? new[] { "http://localhost:5173", "http://localhost:3000" }; // Default for dev
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DefaultCorsPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials() // Required for cookies
+              .SetIsOriginAllowedToAllowWildcardSubdomains(); // Allow subdomains if needed
+        
+        // In production, be more restrictive
+        if (!isDevelopment)
+        {
+            policy.SetPreflightMaxAge(TimeSpan.FromHours(1)); // Cache preflight requests
+        }
+    });
+});
+
 // Swagger/OpenAPI configuration (only if Enviroment is set to developemnt)
 if (isDevelopment)
 {
@@ -276,7 +298,10 @@ await InitializeDatabaseAsync(app);
 
 app.UseForwardedHeaders(); // reverse proxy
 
+// use cors
+app.UseCors("DefaultCorsPolicy");
 
+// Add request validation
 app.UseRequestValidation();
 
 // Add automatic model validation
