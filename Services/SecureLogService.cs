@@ -1,23 +1,31 @@
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
 using sstore.Data;
 using sstore.Models;
-using Microsoft.AspNetCore.Identity;
 
 namespace sstore.Services
 {
     /// <summary>
-    /// Service implementation for logging operations
+    /// UPDATED LogService with pseudonymization
     /// </summary>
-    public class LogService : ILogService
+    public class SecureLogService : ISecureLogService
     {
         private readonly AppDb _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IDataProtectionService _dataProtection;
 
-        public LogService(AppDb db, IHttpContextAccessor httpContextAccessor, UserManager<ApplicationUser> userManager)
+        public SecureLogService(
+            AppDb db, 
+            IHttpContextAccessor httpContextAccessor, 
+            UserManager<ApplicationUser> userManager,
+            IDataProtectionService dataProtection)
         {
             _db = db;
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
+            _dataProtection = dataProtection;
         }
 
         /// <inheritdoc/>
@@ -53,13 +61,17 @@ namespace sstore.Services
         /// <inheritdoc/>
         public async Task<Log> LogAsync(LogCategory category, string action, string context, string message, string? user = null)
         {
+            // Get user identifier and pseudonymize it
+            var userIdentifier = await GetUserIdentifierAsync(user);
+            var pseudonymizedUser = _dataProtection.PseudonymizeEmail(userIdentifier);
+
             var logEntry = new Log
             {
                 Category = category,
                 Action = action,
                 Context = context,
-                Message = message,
-                User = await GetUserIdentifierAsync(user),
+                Message = message, // Message should not contain PII
+                User = pseudonymizedUser, // Store pseudonymized identifier
                 Timestamp = DateTime.UtcNow
             };
 
@@ -69,28 +81,17 @@ namespace sstore.Services
             return logEntry;
         }
 
-        /// <summary>
-        /// Gets the user identifier from the provided string or current HTTP context
-        /// </summary>
-        /// <param name="user">Optional user identifier</param>
-        /// <returns>User identifier or "anonymous" if not available</returns>
         private async Task<string> GetUserIdentifierAsync(string? user)
         {
-            // If user is explicitly provided, use it
             if (!string.IsNullOrEmpty(user))
-            {
                 return user;
-            }
 
-            // Try to get user from HTTP context
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext?.User?.Identity?.IsAuthenticated == true)
             {
                 var currentUser = await _userManager.GetUserAsync(httpContext.User);
                 if (currentUser != null)
-                {
                     return currentUser.Email ?? currentUser.UserName ?? "anonymous";
-                }
             }
 
             return "anonymous";

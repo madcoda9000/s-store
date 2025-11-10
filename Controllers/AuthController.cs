@@ -18,7 +18,7 @@ namespace sstore.Controllers
         private readonly ISecureCodeGenerator _codeGenerator;
         private readonly ITemporaryTokenService _tokenService;
         private readonly IAntiforgery _anti;
-        private readonly ILogService _log;
+        private readonly ISecureLogService _log;
 
         /// <summary>
         /// Constructor for the AuthController
@@ -33,7 +33,7 @@ namespace sstore.Controllers
             SignInManager<ApplicationUser> signIn,
             UserManager<ApplicationUser> users,
             IAntiforgery anti,
-            ILogService log,
+            ISecureLogService log,
             ISecureCodeGenerator codeGenerator,
             ITemporaryTokenService tokenService)
         {

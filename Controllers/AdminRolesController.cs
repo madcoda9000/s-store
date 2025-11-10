@@ -17,7 +17,7 @@ namespace sstore.Controllers
     {
         private readonly RoleManager<IdentityRole> _roles;
         private readonly UserManager<ApplicationUser> _users;
-        private readonly ILogService _log;
+        private readonly ISecureLogService _log;
         private readonly IAntiforgery _anti;
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace sstore.Controllers
         /// <param name="roles">The role manager to use for retrieving and updating role data.</param>
         /// <param name="users">The user manager to use for retrieving and updating user data.</param>
         /// <param name="anti">The antiforgery service to use for validating anti-forgery tokens.</param>
-        public AdminRolesController(ILogService log, RoleManager<IdentityRole> roles, UserManager<ApplicationUser> users, IAntiforgery anti)
+        public AdminRolesController(ISecureLogService log, RoleManager<IdentityRole> roles, UserManager<ApplicationUser> users, IAntiforgery anti)
         { _roles = roles; _users = users; _log = log; _anti = anti; }
 
         /// <summary>

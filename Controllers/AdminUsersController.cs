@@ -16,7 +16,7 @@ namespace sstore.Controllers
     {
         private readonly UserManager<ApplicationUser> _users;
 
-        private readonly ILogService _log;
+        private readonly ISecureLogService _log;
         private readonly IAntiforgery _anti;
         /// <summary>
         /// Controller for managing users, only accessible by users with the Admin role.
@@ -24,7 +24,7 @@ namespace sstore.Controllers
         /// <param name="users">The user manager to use for retrieving and updating user data.</param>
         /// <param name="log">The log service to use for logging operations.</param>
         /// <param name="anti">The antiforgery service to use for validating anti-forgery tokens.</param>
-        public AdminUsersController(UserManager<ApplicationUser> users, ILogService log, IAntiforgery anti)
+        public AdminUsersController(UserManager<ApplicationUser> users, ISecureLogService log, IAntiforgery anti)
         {
             this._users = users;
             this._log = log;

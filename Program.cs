@@ -67,8 +67,11 @@ builder.Services.AddDbContext<AppDb>(opt =>
 // Register HttpContextAccessor for accessing current user context
 builder.Services.AddHttpContextAccessor();
 
+// add DataProtection service
+builder.Services.AddScoped<IDataProtectionService, DataProtectionService>();
+
 // Register LogService as scoped service
-builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddScoped<ISecureLogService, SecureLogService>();
 
 // Register Email Configuration from environment variables
 var emailConfig = EmailConfiguration.FromEnvironment();

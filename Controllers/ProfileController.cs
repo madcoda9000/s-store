@@ -21,7 +21,7 @@ namespace sstore.Controllers
         private readonly SignInManager<ApplicationUser> _signIn;
         private readonly ISessionManagementService _session;
         private readonly IAntiforgery _anti;
-        private readonly ILogService _log;
+        private readonly ISecureLogService _log;
 
         /// <summary>
         /// Constructor for the ProfileController
@@ -35,7 +35,7 @@ namespace sstore.Controllers
             UserManager<ApplicationUser> users,
             SignInManager<ApplicationUser> signIn,
             IAntiforgery anti,
-            ILogService log,
+            ISecureLogService log,
             ISessionManagementService session)
         {
             _users = users;

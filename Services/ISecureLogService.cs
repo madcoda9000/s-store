@@ -5,7 +5,7 @@ namespace sstore.Services
     /// <summary>
     /// Service interface for logging operations across the application
     /// </summary>
-    public interface ILogService
+    public interface ISecureLogService
     {
         /// <summary>
         /// Logs an error event

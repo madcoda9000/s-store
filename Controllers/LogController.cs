@@ -15,10 +15,10 @@ namespace sstore.Controllers
     [Authorize]
     public class LogController : ControllerBase
     {
-        private readonly ILogService _log;
+        private readonly ISecureLogService _log;
         private readonly IAntiforgery _anti;
 
-        public LogController(ILogService log, IAntiforgery anti)
+        public LogController(ISecureLogService log, IAntiforgery anti)
         {
             _log = log;
             _anti = anti;

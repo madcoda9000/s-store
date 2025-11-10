@@ -27,7 +27,7 @@ namespace sstore.Services
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
+            var logService = scope.ServiceProvider.GetRequiredService<ISecureLogService>();
             var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
             var isValid = await emailSender.ValidateConfigurationAsync();
 
@@ -71,7 +71,7 @@ namespace sstore.Services
 
             var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
             var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
-            var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
+            var logService = scope.ServiceProvider.GetRequiredService<ISecureLogService>();
 
             // Get pending jobs
             var pendingJobs = await emailService.GetPendingJobsAsync(limit: 10);
@@ -186,7 +186,7 @@ namespace sstore.Services
         public override async Task StopAsync(CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
-            var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
+            var logService = scope.ServiceProvider.GetRequiredService<ISecureLogService>();
 
             _logger.LogInformation("Email Background Service is stopping...");
             await logService.LogMailAsync("StopAsync", "EmailBackgroundService", "Email Background Service is stopping...", "SYSTEM");

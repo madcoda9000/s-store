@@ -10,9 +10,9 @@ namespace sstore.Services;
 public class TemporaryTokenService : ITemporaryTokenService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ILogService _logService;
+    private readonly ISecureLogService _logService;
 
-    public TemporaryTokenService(UserManager<ApplicationUser> userManager, ILogService logService)
+    public TemporaryTokenService(UserManager<ApplicationUser> userManager, ISecureLogService logService)
     {
         _userManager = userManager;
         _logService = logService;

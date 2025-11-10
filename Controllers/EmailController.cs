@@ -13,9 +13,9 @@ namespace sstore.Controllers
     public class EmailController : ControllerBase
     {
         private readonly IEmailService _emailService;
-        private readonly ILogService _logService;
+        private readonly ISecureLogService _logService;
 
-        public EmailController(IEmailService emailService, ILogService logService)
+        public EmailController(IEmailService emailService, ISecureLogService logService)
         {
             _emailService = emailService;
             _logService = logService;

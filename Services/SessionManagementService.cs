@@ -10,12 +10,12 @@ namespace sstore.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogService _logService;
+        private readonly ISecureLogService _logService;
 
         public SessionManagementService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            ILogService logService)
+            ISecureLogService logService)
         {
             _userManager = userManager;
             _signInManager = signInManager;

@@ -11,10 +11,10 @@ namespace sstore.Services
     public class EmailService : IEmailService
     {
         private readonly AppDb _db;
-        private readonly ILogService _logService;
+        private readonly ISecureLogService _logService;
         private readonly EmailConfiguration _emailConfig;
 
-        public EmailService(AppDb db, ILogService logService, EmailConfiguration emailConfig)
+        public EmailService(AppDb db, ISecureLogService logService, EmailConfiguration emailConfig)
         {
             _db = db;
             _logService = logService;
