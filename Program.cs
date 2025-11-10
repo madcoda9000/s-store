@@ -87,6 +87,9 @@ builder.Services.AddScoped<ISecureCodeGenerator, SecureCodeGenerator>();
 // register temporary token service
 builder.Services.AddScoped<ITemporaryTokenService, TemporaryTokenService>();
 
+// register session management service
+builder.Services.AddScoped<ISessionManagementService, SessionManagementService>();
+
 // Identity Core + Roles, aber ohne Razor UI, wir liefern JSON
 builder.Services
     .AddIdentityCore<ApplicationUser>(o =>

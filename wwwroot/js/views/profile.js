@@ -463,11 +463,19 @@ async function handlePasswordChange(el) {
       setCsrfToken(res.csrfToken);
     }
 
-    messageEl.textContent = t("profile.security.pwChangeSuccess");
-    messageEl.className = "alert alert-success";
+    if (res.ok) {
+      // Clear form
+      form.reset();
 
-    // Clear form
-    form.reset();
+      messageEl.textContent = res.message || t("profile.security.successChangePwLogin");
+      messageEl.className = "alert alert-success";
+
+      setTimeout(() => {
+        location.hash = "/login";
+      }, 2000);
+      return;
+    }
+    
   } catch (err) {
     const error = /** @type {Error} */ (err);
     messageEl.textContent = error.message || t("errors.pwChangeError");

@@ -244,6 +244,7 @@
       "failedToUpdateProfile": "Profil konnte nicht aktualisiert werden",
       "successUpdateProfile": "Profil erfolgreich aktualisiert",
       "successUpadteProfileLogin": "Profil erfolgreich aktualisiert. Weiterleitung zur Anmeldung...",
+      "successChangePwLogin": "Passwort erfolgreich geændert. Weiterleitung zur Anmeldung...",
       "noChangesDetected": "Keine Änderungen erkannt",
       "emailRequired": "E-Mail-Adresse erforderlich",
       "twoFactorEnforced": "Die Zwei-Faktor-Authentifizierung wird vom Administrator erzwungen und kann nicht deaktiviert werden",

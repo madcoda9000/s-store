@@ -19,6 +19,7 @@ namespace sstore.Controllers
     {
         private readonly UserManager<ApplicationUser> _users;
         private readonly SignInManager<ApplicationUser> _signIn;
+        private readonly ISessionManagementService _session;
         private readonly IAntiforgery _anti;
         private readonly ILogService _log;
 
@@ -29,16 +30,19 @@ namespace sstore.Controllers
         /// <param name="signIn">Sign in manager for ApplicationUser</param>
         /// <param name="anti">Antiforgery service</param>
         /// <param name="log">Logging service</param>
+        /// <param name="session">Session management service</param>
         public ProfileController(
             UserManager<ApplicationUser> users,
             SignInManager<ApplicationUser> signIn,
             IAntiforgery anti,
-            ILogService log)
+            ILogService log,
+            ISessionManagementService session)
         {
             _users = users;
             _signIn = signIn;
             _anti = anti;
             _log = log;
+            _session = session;
         }
 
         /// <summary>
@@ -225,6 +229,10 @@ namespace sstore.Controllers
                 user.Email ?? user.UserName);
 
             var tokens = _anti.GetAndStoreTokens(HttpContext);
+
+            // invalidate current session!
+            await _session.InvalidateAllSessionsAsync(user);
+
             return Ok(new { ok = true, csrfToken = tokens.RequestToken });
         }
     }

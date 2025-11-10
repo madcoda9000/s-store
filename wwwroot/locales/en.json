@@ -244,6 +244,7 @@
       "failedToUpdateProfile": "Failed to update profile",
       "successUpdateProfile": "Profile successfully updated",
       "successUpadteProfileLogin": "Profile updated successfully! Please login with your new email.",
+      "successChangePwLogin": "Password successfully changed! Please login with your new Password.",
       "noChangesDetected": "No changes detected",
       "emailRequired": "Email address is required",
       "twoFactorEnforced": "Two-factor authentication is enforced by administrator and cannot be disabled",
