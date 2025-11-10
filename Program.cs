@@ -151,9 +151,8 @@ builder.Services.AddAntiforgery(o =>
 
 builder.Services.AddControllers(); // reines JSON
 
-// Swagger/OpenAPI configuration (only if ENABLE_SWAGGER=true)
-var enableSwagger = Environment.GetEnvironmentVariable("ENABLE_SWAGGER")?.ToLower() == "true";
-if (enableSwagger)
+// Swagger/OpenAPI configuration (only if Enviroment is set to developemnt)
+if (isDevelopment)
 {
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
@@ -306,7 +305,7 @@ if (!isDevelopment && enforceHttpsRedirect)
 }
 
 // Swagger UI (only if ENABLE_SWAGGER=true)
-if (enableSwagger)
+if (isDevelopment)
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>
@@ -324,7 +323,7 @@ if (enableSwagger)
 app.Use(async (ctx, next) =>
 {
     // Adjust CSP for Swagger UI if enabled
-    var cspPolicy = enableSwagger && ctx.Request.Path.StartsWithSegments("/api/doc")
+    var cspPolicy = isDevelopment && ctx.Request.Path.StartsWithSegments("/api/doc")
         ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
         : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'";
     
