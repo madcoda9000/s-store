@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using sstore.Filters;
 using sstore.Services;
 using sstore.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace sstore.Controllers
 {
@@ -229,17 +230,33 @@ namespace sstore.Controllers
     }
 
     /// <summary>
-    /// Data transfer object for updating profile information
+    /// Validated update profile DTO
     /// </summary>
-    /// <param name="FirstName">User's first name</param>
-    /// <param name="LastName">User's last name</param>
-    /// <param name="Email">User's email address (also used as username)</param>
-    public record UpdateProfileDto(string? FirstName, string? LastName, string? Email);
+    public record UpdateProfileDto
+    {
+        [StringLength(100, ErrorMessage = "First name must not exceed 100 characters")]
+        [RegularExpression(@"^[a-zA-ZäöüÄÖÜß\s-]*$", ErrorMessage = "First name contains invalid characters")]
+        public string? FirstName { get; init; }
+
+        [StringLength(100, ErrorMessage = "Last name must not exceed 100 characters")]
+        [RegularExpression(@"^[a-zA-ZäöüÄÖÜß\s-]*$", ErrorMessage = "Last name contains invalid characters")]
+        public string? LastName { get; init; }
+
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public string? Email { get; init; }
+    }
 
     /// <summary>
-    /// Data transfer object for changing password
+    /// Validated change password DTO
     /// </summary>
-    /// <param name="CurrentPassword">Current password</param>
-    /// <param name="NewPassword">New password</param>
-    public record ChangePasswordDto(string CurrentPassword, string NewPassword);
+    public record ChangePasswordDto {
+        [Required(ErrorMessage = "Current Password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "Current Password must be between 12 and 128 characters")]
+        public required string CurrentPassword { get; init; }
+
+        [Required(ErrorMessage = "New Password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "New Password must be between 12 and 128 characters")]
+        public required string NewPassword { get; init; }
+    };
 }

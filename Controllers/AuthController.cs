@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using sstore.Filters;
 using sstore.Services;
 using sstore.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace sstore.Controllers
 {
@@ -1187,15 +1188,160 @@ namespace sstore.Controllers
         }
     }
 
-    public record LoginDto(string Username, string Password, bool RememberMe);
-    public record Verify2FaDto(string Code, bool RememberThisDevice);
-    public record VerifyEmail2FaDto(string Email, string Code, bool RememberThisDevice);
-    public record VerifySetup2FaDto(string Code);
-    public record Reset2FaDto(string UserId);
-    public record RegisterDto(string Email, string Username, string Password, string? FirstName, string? LastName);
-    public record VerifyEmailDto(string UserId, string Token);
-    public record VerifyEmailCodeDto(string Email, string Code);
-    public record ResendVerificationDto(string Email);
-    public record ForgotPasswordDto(string Email);
-    public record ResetPasswordDto(string Email, string Token, string Code, string NewPassword);
+    /// <summary>
+    /// Validated login DTO
+    /// </summary>
+    public record LoginDto
+    {
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(256, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 256 characters")]
+        public required string Username { get; init; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "Password must be between 12 and 128 characters")]
+        public required string Password { get; init; }
+        public bool RememberMe { get; init; }
+    }
+
+    /// <summary>
+    /// Validated 2FA verification DTO
+    /// </summary>
+    public record Verify2FaDto
+    {
+        [Required(ErrorMessage = "2FA code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "2FA code must be exactly 6 digits")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "2FA code must contain only digits")]
+        public required string Code { get; init; }
+        public bool RememberThisDevice { get; init; }
+    }
+
+    /// <summary>
+    /// Validated 2FA email verification DTO
+    /// </summary>
+    public record VerifyEmail2FaDto {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public required string Email { get; init; }
+
+        [Required(ErrorMessage = "2FA code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "2FA code must be exactly 6 digits")]
+        public required string Code { get; init; }
+        public bool RememberThisDevice { get; init; }
+    };
+
+    /// <summary>
+    /// Validated 2FA setup DTO
+    /// </summary>
+    public record VerifySetup2FaDto {
+        [Required(ErrorMessage = "2FA code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "2FA code must be exactly 6 digits")]
+        public required string Code { get; init; }
+    };
+
+    /// <summary>
+    /// Validated 2FA reset DTO
+    /// </summary>
+    public record Reset2FaDto {
+        [Required(ErrorMessage = "User ID is required")]
+        [StringLength(256, MinimumLength = 3, ErrorMessage = "User ID must be between 3 and 256 characters")]
+        public required string UserId { get; init; }
+    
+    };
+
+    /// <summary>
+    /// Validated registration DTO
+    /// </summary>
+    public record RegisterDto
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public required string Email { get; init; }
+
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]
+        [RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can only contain letters, numbers, dots, underscores and hyphens")]
+        public required string Username { get; init; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "Password must be between 12 and 128 characters")]
+        public required string Password { get; init; }
+
+        [StringLength(100, ErrorMessage = "First name must not exceed 100 characters")]
+        [RegularExpression(@"^[a-zA-ZäöüÄÖÜß\s-]*$", ErrorMessage = "First name contains invalid characters")]
+        public string? FirstName { get; init; }
+
+        [StringLength(100, ErrorMessage = "Last name must not exceed 100 characters")]
+        [RegularExpression(@"^[a-zA-ZäöüÄÖÜß\s-]*$", ErrorMessage = "Last name contains invalid characters")]
+        public string? LastName { get; init; }
+    }
+
+    /// <summary>
+    /// Validated email verification DTO
+    /// </summary>
+    public record VerifyEmailDto {
+        [Required(ErrorMessage = "User ID is required")]
+        [StringLength(128, ErrorMessage = "User ID must not exceed 128 characters")]
+        public required string UserId { get; init; }
+
+        [Required(ErrorMessage = "Token is required")]
+        [StringLength(128, ErrorMessage = "Token must not exceed 128 characters")]
+        public required string Token { get; init; }
+    };
+
+    /// <summary>
+    /// Validated email verification DTO
+    /// </summary>
+    public record VerifyEmailCodeDto
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public required string Email { get; init; }
+
+        [Required(ErrorMessage = "Verification code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Verification code must be exactly 6 digits")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "Verification code must contain only digits")]
+        public required string Code { get; init; }
+    };
+
+    /// <summary>
+    /// Validated resend verification DTO
+    /// </summary>
+    public record ResendVerificationDto {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")] 
+        public required string Email { get; init; }
+    };
+
+    /// <summary>
+    /// Validated forgot password DTO
+    /// </summary>
+    public record ForgotPasswordDto {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")] 
+        public required string Email { get; init; } 
+    };
+    
+    /// <summary>
+    /// Validated password reset DTO
+    /// </summary>
+    public record ResetPasswordDto
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public required string Email { get; init; }
+
+        [StringLength(1000, ErrorMessage = "Token must not exceed 1000 characters")]
+        public string? Token { get; init; }
+
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Code must be exactly 6 digits")]
+        [RegularExpression(@"^\d{6}$", ErrorMessage = "Code must contain only digits")]
+        public string? Code { get; init; }
+
+        [Required(ErrorMessage = "New password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "Password must be between 12 and 128 characters")]
+        public required string NewPassword { get; init; }
+    }
 }

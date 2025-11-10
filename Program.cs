@@ -11,6 +11,8 @@ using sstore.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.OpenApi.Models;
 using System.Net;
+using sstore.Middleware;
+using Microsoft.AspNetCore.Mvc;
 
 // Load .env file before anything else
 Env.Load();
@@ -268,6 +270,31 @@ var app = builder.Build();
 await InitializeDatabaseAsync(app);
 
 app.UseForwardedHeaders(); // reverse proxy
+
+
+app.UseRequestValidation();
+
+// Add automatic model validation
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .SelectMany(e => e.Value!.Errors.Select(er => new
+            {
+                field = e.Key,
+                message = er.ErrorMessage
+            }))
+            .ToList();
+
+        return new BadRequestObjectResult(new
+        {
+            error = "Validation failed",
+            details = errors
+        });
+    };
+});
 
 // Only enforce HTTPS redirect if explicitly enabled AND not in development
 // When behind a reverse proxy (nginx, traefik), the proxy handles HTTPS

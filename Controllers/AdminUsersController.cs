@@ -5,6 +5,7 @@ using sstore.Services;
 using sstore.Models;
 using Microsoft.AspNetCore.Antiforgery;
 using sstore.Filters;
+using System.ComponentModel.DataAnnotations;
 
 namespace sstore.Controllers
 {
@@ -248,7 +249,39 @@ namespace sstore.Controllers
         }
     }
 
-    public record CreateUserDto(string Username, string Email, string Password);
-    public record UpdateUserDto(string? Username, string? Email);
+    /// <summary>
+    /// Validated create user DTO (Admin)
+    /// </summary>
+    public record CreateUserDto
+    {
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]
+        [RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can only contain letters, numbers, dots, underscores and hyphens")]
+        public required string Username { get; init; }
 
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public required string Email { get; init; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [StringLength(128, MinimumLength = 12, ErrorMessage = "Password must be between 12 and 128 characters")]
+        public required string Password { get; init; }
+    }
+
+    /// <summary>
+    /// Validated update user DTO
+    /// </summary>
+    public record UpdateUserDto
+    {
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters")]
+        [RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can only contain letters, numbers, dots, underscores and hyphens")]
+        public required string Username { get; init; }
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        [StringLength(256, ErrorMessage = "Email must not exceed 256 characters")]
+        public required string Email { get; init; }
+    }
 }

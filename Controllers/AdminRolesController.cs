@@ -6,6 +6,7 @@ using sstore.Services;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Antiforgery;
 using sstore.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace sstore.Controllers
 {
@@ -124,7 +125,27 @@ namespace sstore.Controllers
         }
     }
 
-    public record RoleDto(string Name);
-    public record AssignRoleDto(string UserId, string RoleName);
+    /// <summary>
+    /// DTO for creating a new role
+    /// </summary>
+    public record RoleDto
+    {
+        [Required(ErrorMessage = "Rolename is required")]
+        public required string Name { get; init; }
+    };
+
+    /// <summary>
+    /// DTO for assigning a role to a user
+    /// </summary>
+    public record AssignRoleDto
+    {
+        [Required(ErrorMessage = "UserId is required")]
+        [StringLength(450, ErrorMessage = "UserId is required")]
+        public required string UserId { get; init; }
+
+        [Required(ErrorMessage = "RoleName is required")]
+        [StringLength(450, ErrorMessage = "RoleName is required")]
+        public required string RoleName { get; init; }
+    };
 
 }
