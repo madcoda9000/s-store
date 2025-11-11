@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using sstore.Filters;
 using sstore.Services;
 using sstore.Models;
+using sstore.Helpers;
 using System.ComponentModel.DataAnnotations;
 
 namespace sstore.Controllers
@@ -677,28 +678,8 @@ namespace sstore.Controllers
         [ValidateAntiForgeryApi]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // Check if email already exists
-            var existingEmail = await _users.FindByEmailAsync(dto.Email);
-            if (existingEmail != null)
-            {
-                await _log.LogAuditAsync(
-                    "RegisterAttempt",
-                    "AuthController",
-                    $"Registration attempt with existing email",  // Email NICHT loggen!
-                    "anonymous");
-
-                // SECURITY: Return same message to prevent email enumeration
-                await Task.Delay(Random.Shared.Next(100, 300));  // Timing attack mitigation
-
-                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
-                return Ok(new
-                {
-                    message = "Registration successful. Please check your email to verify your account.",
-                    csrfToken = dummyTokens.RequestToken
-                });
-            }
-
-            // Check if username already exists
+            // Check username FIRST - it's acceptable to reveal if username exists
+            // This prevents username enumeration but allows proper UX feedback
             var existingUsername = await _users.FindByNameAsync(dto.Username);
             if (existingUsername != null)
             {
@@ -710,82 +691,100 @@ namespace sstore.Controllers
                 return BadRequest(new { error = "Username already taken" });
             }
 
-            // Create user
-            var user = new ApplicationUser
-            {
-                UserName = dto.Username,
-                Email = dto.Email,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                EmailConfirmed = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var result = await _users.CreateAsync(user, dto.Password);
-
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                await _log.LogErrorAsync(
-                    "RegisterFailed",
-                    "AuthController",
-                    $"Failed to create user: {errors}",
-                    dto.Email);
-                return BadRequest(new { error = "Registration failed", details = result.Errors.Select(e => e.Description) });
-            }
-
-            // Generate email verification token
-            var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
-
-            // Generate a simple 6-digit verification code
-            var verificationCode = _codeGenerator.GenerateNumericCode(6);
-
-            await _tokenService.StoreTokenAsync(
-                user,
-                "EmailVerification",
-                verificationCode,
-                TimeSpan.FromHours(24)
-            );
-
-            // Send verification email
-            var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var verificationLink = $"{baseUrl}/#/verify-email?token={Uri.EscapeDataString(verificationToken)}&userId={user.Id}";
-            var manualVerificationLink = $"{baseUrl}/#/verify-email";
-
-            await emailService.SendEmailAsync(
-                "verify-email",
-                "Verify Your Email Address",
-                user.Email!,
-                new Dictionary<string, object>
-                {
-                    { "app_name", "S-Store" },
-                    { "user_name", user.DisplayName },
-                    { "verification_code", verificationCode },
-                    { "verification_link", verificationLink },
-                    { "manual_verification_link", manualVerificationLink },
-                    { "expiry_hours", 24 },
-                    { "current_year", DateTime.UtcNow.Year }
-                },
-                user.DisplayName,
-                "system"
-            );
-
-            await _log.LogAuditAsync(
-                "RegisterSuccess",
-                "AuthController",
-                $"New user registered",
-                user.Email);
-
-            // Generate and return new CSRF token
+            // Email check with constant-time execution to prevent timing attacks
             var tokens = _anti.GetAndStoreTokens(HttpContext);
-
-            return Ok(new
+            var response = new
             {
                 message = "Registration successful. Please check your email to verify your account.",
                 csrfToken = tokens.RequestToken
+            };
+
+            await EmailEnumerationHelpers.ExecuteWithConstantTimeAsync(async () =>
+            {
+                // Check if email already exists
+                var existingEmail = await _users.FindByEmailAsync(dto.Email);
+                if (existingEmail != null)
+                {
+                    await _log.LogAuditAsync(
+                        "RegisterAttempt",
+                        "AuthController",
+                        "Registration attempt with existing email",  // NO email in log!
+                        "anonymous");
+                    // Don't create user, but return success message (handled by constant time wrapper)
+                    return;
+                }
+
+                // Create user
+                var user = new ApplicationUser
+                {
+                    UserName = dto.Username,
+                    Email = dto.Email,
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    EmailConfirmed = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                var result = await _users.CreateAsync(user, dto.Password);
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    await _log.LogErrorAsync(
+                        "RegisterFailed",
+                        "AuthController",
+                        $"Failed to create user: {errors}",
+                        dto.Email);
+                    return;
+                }
+
+                // Generate email verification token
+                var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
+
+                // Generate a simple 6-digit verification code
+                var verificationCode = _codeGenerator.GenerateNumericCode(6);
+
+                await _tokenService.StoreTokenAsync(
+                    user,
+                    "EmailVerification",
+                    verificationCode,
+                    TimeSpan.FromHours(24)
+                );
+
+                // Send verification email
+                var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var verificationLink = $"{baseUrl}/#/verify-email?token={Uri.EscapeDataString(verificationToken)}&userId={user.Id}";
+                var manualVerificationLink = $"{baseUrl}/#/verify-email";
+
+                await emailService.SendEmailAsync(
+                    "verify-email",
+                    "Verify Your Email Address",
+                    user.Email!,
+                    new Dictionary<string, object>
+                    {
+                { "app_name", "S-Store" },
+                { "user_name", user.DisplayName },
+                { "verification_code", verificationCode },
+                { "verification_link", verificationLink },
+                { "manual_verification_link", manualVerificationLink },
+                { "expiry_hours", 24 },
+                { "current_year", DateTime.UtcNow.Year }
+                    },
+                    user.DisplayName,
+                    "system"
+                );
+
+                await _log.LogAuditAsync(
+                    "RegisterSuccess",
+                    "AuthController",
+                    "New user registered",
+                    user.Email);
             });
+
+            // Always return the same response regardless of whether email existed
+            return Ok(response);
         }
 
         /// <summary>
@@ -993,85 +992,85 @@ namespace sstore.Controllers
         [ValidateAntiForgeryApi]
         public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto)
         {
-            var user = await _users.FindByEmailAsync(dto.Email);
-            if (user == null)
-            {
-                await _log.LogAuditAsync(
-                    "ResendVerification",
-                    "AuthController",
-                    $"Verification resend attempted for non-existent email",  // no mail logging!
-                    "anonymous");
-
-                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
-                return Ok(new
-                {
-                    message = "If this email is registered, a verification email will be sent.",
-                    csrfToken = dummyTokens.RequestToken  // return tokrn on error too!
-                });
-            }
-
-            if (user.EmailConfirmed)
-            {
-                await _log.LogAuditAsync(
-                    "ResendVerification",
-                    "AuthController",
-                    "Verification resend attempted for already confirmed user",
-                    user.Email ?? user.UserName);
-                return BadRequest(new { error = "Email already verified" });
-            }
-
-            // Generate new verification token
-            var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
-
-            // Generate new 6-digit verification code
-            var verificationCode = _codeGenerator.GenerateNumericCode(6);
-
-            await _tokenService.StoreTokenAsync(
-                user,
-                "EmailVerification",
-                verificationCode,
-                TimeSpan.FromHours(24)
-            );
-
-            // Send verification email
-            var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var verificationLink = $"{baseUrl}/#/verify-email?token={Uri.EscapeDataString(verificationToken)}&userId={user.Id}";
-            var manualVerificationLink = $"{baseUrl}/#/verify-email";
-
-            await emailService.SendEmailAsync(
-                "verify-email",
-                "Verify Your Email Address",
-                user.Email!,
-                new Dictionary<string, object>
-                {
-                    { "app_name", "S-Store" },
-                    { "user_name", user.DisplayName },
-                    { "verification_code", verificationCode },
-                    { "verification_link", verificationLink },
-                    { "manual_verification_link", manualVerificationLink },
-                    { "expiry_hours", 24 },
-                    { "current_year", DateTime.UtcNow.Year }
-                },
-                user.DisplayName,
-                user.Email
-            );
-
-            await _log.LogAuditAsync(
-                "ResendVerificationSuccess",
-                "AuthController",
-                "Verification email resent",
-                user.Email);
-
-            // Generate and return new CSRF token
             var tokens = _anti.GetAndStoreTokens(HttpContext);
-
-            return Ok(new
+            var response = new
             {
                 message = "If this email is registered, a verification email will be sent.",
                 csrfToken = tokens.RequestToken
+            };
+
+            // Execute with constant time to prevent timing attacks
+            await EmailEnumerationHelpers.ExecuteWithConstantTimeAsync(async () =>
+            {
+                var user = await _users.FindByEmailAsync(dto.Email);
+
+                if (user == null)
+                {
+                    await _log.LogAuditAsync(
+                        "ResendVerification",
+                        "AuthController",
+                        "Verification resend attempted for non-existent email",
+                        "anonymous");
+                    return;
+                }
+
+                if (user.EmailConfirmed)
+                {
+                    await _log.LogAuditAsync(
+                        "ResendVerification",
+                        "AuthController",
+                        "Verification resend attempted for already confirmed user",
+                        user.Email ?? user.UserName);
+                    return;
+                }
+
+                // Generate new verification token
+                var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
+
+                // Generate new 6-digit verification code
+                var verificationCode = _codeGenerator.GenerateNumericCode(6);
+
+                await _tokenService.StoreTokenAsync(
+                    user,
+                    "EmailVerification",
+                    verificationCode,
+                    TimeSpan.FromHours(24)
+                );
+
+                // Send verification email
+                var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var verificationLink = $"{baseUrl}/#/verify-email?token={Uri.EscapeDataString(verificationToken)}&userId={user.Id}";
+                var manualVerificationLink = $"{baseUrl}/#/verify-email";
+
+                await emailService.SendEmailAsync(
+                    "verify-email",
+                    "Verify Your Email Address",
+                    user.Email!,
+                    new Dictionary<string, object>
+                    {
+                { "app_name", "S-Store" },
+                { "user_name", user.DisplayName },
+                { "verification_code", verificationCode },
+                { "verification_link", verificationLink },
+                { "manual_verification_link", manualVerificationLink },
+                { "expiry_hours", 24 },
+                { "current_year", DateTime.UtcNow.Year }
+                    },
+                    user.DisplayName,
+                    user.Email
+                );
+
+                await _log.LogAuditAsync(
+                    "ResendVerificationSuccess",
+                    "AuthController",
+                    "Verification email resent",
+                    user.Email);
             });
+
+            // Always return the same response
+            return Ok(response);
         }
 
         /// <summary>
@@ -1083,88 +1082,82 @@ namespace sstore.Controllers
         [ValidateAntiForgeryApi]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
-            var user = await _users.FindByEmailAsync(dto.Email);
-            if (user == null)
-            {
-                // Don't reveal if email exists or not for security
-                await _log.LogAuditAsync(
-                    "ForgotPassword",
-                    "AuthController",
-                    $"Password reset attempted for non-existent email",
-                    "anonymous");
-                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
-                return Ok(new
-                {
-                    message = "If this email is registered, a password reset link will be sent.",
-                    csrfToken = dummyTokens.RequestToken
-                });
-            }
-
-            if (!user.EmailConfirmed)
-            {
-                await _log.LogAuditAsync(
-                    "ForgotPassword",
-                    "AuthController",
-                    "Password reset attempted for unconfirmed email",
-                    user.Email ?? user.UserName);
-                // Still return generic message for security
-                var dummyTokens = _anti.GetAndStoreTokens(HttpContext);
-                return Ok(new
-                {
-                    message = "If this email is registered, a password reset link will be sent.",
-                    csrfToken = dummyTokens.RequestToken
-                });
-            }
-
-            // Generate password reset token
-            var resetToken = await _users.GeneratePasswordResetTokenAsync(user);
-
-            // Generate secure 6-digit reset code with expiration
-            var resetCode = _codeGenerator.GenerateNumericCode(6);
-            await _tokenService.StoreTokenAsync(
-                user,
-                "PasswordReset",
-                resetCode,
-                TimeSpan.FromMinutes(30)
-            );
-
-            // Send password reset email
-            var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var resetUrl = $"{baseUrl}/#/reset-password?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(user.Email!)}";
-
-            await emailService.SendEmailAsync(
-                "password-reset",
-                "Password Reset Request",
-                user.Email!,
-                new Dictionary<string, object>
-                {
-                    { "app_name", "S-Store" },
-                    { "user_name", user.DisplayName },
-                    { "reset_url", resetUrl },
-                    { "reset_token", resetCode },
-                    { "expiry_minutes", 30 },
-                    { "current_year", DateTime.UtcNow.Year }
-                },
-                user.DisplayName,
-                "system"
-            );
-
-            await _log.LogAuditAsync(
-                "ForgotPasswordSuccess",
-                "AuthController",
-                "Password reset email sent",
-                user.Email);
-
-            // Generate and return new CSRF token
             var tokens = _anti.GetAndStoreTokens(HttpContext);
-
-            return Ok(new
+            var response = new
             {
                 message = "If this email is registered, a password reset link will be sent.",
                 csrfToken = tokens.RequestToken
+            };
+
+            // Execute with constant time to prevent timing attacks
+            await EmailEnumerationHelpers.ExecuteWithConstantTimeAsync(async () =>
+            {
+                var user = await _users.FindByEmailAsync(dto.Email);
+
+                if (user == null)
+                {
+                    await _log.LogAuditAsync(
+                        "ForgotPassword",
+                        "AuthController",
+                        "Password reset attempted for non-existent email",
+                        "anonymous");
+                    return;
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    await _log.LogAuditAsync(
+                        "ForgotPassword",
+                        "AuthController",
+                        "Password reset attempted for unconfirmed email",
+                        user.Email ?? user.UserName);
+                    return;
+                }
+
+                // Generate password reset token
+                var resetToken = await _users.GeneratePasswordResetTokenAsync(user);
+
+                // Generate secure 6-digit reset code with expiration
+                var resetCode = _codeGenerator.GenerateNumericCode(6);
+                await _tokenService.StoreTokenAsync(
+                    user,
+                    "PasswordReset",
+                    resetCode,
+                    TimeSpan.FromMinutes(30)
+                );
+
+                // Send password reset email
+                var emailService = HttpContext.RequestServices.GetRequiredService<IEmailService>();
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var resetUrl = $"{baseUrl}/#/reset-password?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(user.Email!)}";
+
+                await emailService.SendEmailAsync(
+                    "password-reset",
+                    "Password Reset Request",
+                    user.Email!,
+                    new Dictionary<string, object>
+                    {
+                { "app_name", "S-Store" },
+                { "user_name", user.DisplayName },
+                { "reset_url", resetUrl },
+                { "reset_token", resetCode },
+                { "expiry_minutes", 30 },
+                { "current_year", DateTime.UtcNow.Year }
+                    },
+                    user.DisplayName,
+                    "system"
+                );
+
+                await _log.LogAuditAsync(
+                    "ForgotPasswordSuccess",
+                    "AuthController",
+                    "Password reset email sent",
+                    user.Email);
             });
+
+            // Always return the same response
+            return Ok(response);
         }
 
         /// <summary>
