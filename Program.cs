@@ -157,6 +157,28 @@ builder.Services.AddAntiforgery(o =>
 
 builder.Services.AddControllers(); // reines JSON
 
+// Add automatic model validation - MUSS VOR builder.Build() SEIN!
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .SelectMany(e => e.Value!.Errors.Select(er => new
+            {
+                field = e.Key,
+                message = er.ErrorMessage
+            }))
+            .ToList();
+
+        return new BadRequestObjectResult(new
+        {
+            error = "Validation failed",
+            details = errors
+        });
+    };
+});
+
 // CORS Configuration - only if frontend is on different origin
 var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',')
     ?? new[] { "http://localhost:5173", "http://localhost:3000" }; // Default for dev
@@ -179,7 +201,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Swagger/OpenAPI configuration (only if Enviroment is set to developemnt)
+// Swagger/OpenAPI configuration (only if Environment is set to development)
 if (isDevelopment)
 {
     builder.Services.AddEndpointsApiExplorer();
@@ -251,45 +273,71 @@ if (isDevelopment)
     });
 }
 
-// Basic Rate Limit (sinnvoll für Login/Passwort-vergessen)
+// Enhanced Rate Limiting Configuration
 builder.Services.AddOptions();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(opt =>
 {
     opt.GeneralRules = new()
     {
-        // strict rate limit for login
+        // === CRITICAL AUTHENTICATION ENDPOINTS ===
         new() { Endpoint = "POST:/auth/login", Limit = 5, Period = "15m" },
         new() { Endpoint = "POST:/auth/2fa/verify-authenticator", Limit = 5, Period = "15m" },
         new() { Endpoint = "POST:/auth/2fa/verify-email", Limit = 5, Period = "15m" },
-        new() { Endpoint = "POST:/auth/reset-password", Limit = 3, Period = "60m" },
-        new() { Endpoint = "POST:/auth/forgot-password", Limit = 3, Period = "60mm" },
-        // moderate rate limit for registration
-        new() { Endpoint = "POST:/auth/register", Limit = 3, Period = "60m" },
-        new() { Endpoint = "POST:/auth/verify.email", Limit = 10, Period = "60m" },
-        new() { Endpoint = "POST:/auth/verify-email-code", Limit = 10, Period = "60m" },
-        new() { Endpoint = "POST:/auth/resend-verification", Limit = 3, Period = "60m" },
-        // 2fa setup moderate limits
-        new() { Endpoint = "POST:/auth/2fa/setup-authenticator", Limit = 5, Period = "60m" },
-        new() { Endpoint = "POST:/auth/2fa/setup-email", Limit = 5, Period = "60m" },
-        new() { Endpoint = "POST:/auth/2fa/verify-authenticator-setup", Limit = 10, Period = "60m" },
-        new() { Endpoint = "POST:/auth/2fa/verify-email-setup", Limit = 10, Period = "60m" },
-        // default rate limit
+        new() { Endpoint = "POST:/auth/reset-password", Limit = 3, Period = "1h" },
+        new() { Endpoint = "POST:/auth/forgot-password", Limit = 3, Period = "1h" },  // KORRIGIERT: 60mm -> 1h
+        
+        // === REGISTRATION AND VERIFICATION ===
+        new() { Endpoint = "POST:/auth/register", Limit = 3, Period = "1h" },
+        new() { Endpoint = "POST:/auth/verify-email", Limit = 10, Period = "1h" },  // KORRIGIERT: verify.email -> verify-email
+        new() { Endpoint = "POST:/auth/verify-email-code", Limit = 10, Period = "1h" },
+        new() { Endpoint = "POST:/auth/resend-verification", Limit = 3, Period = "1h" },
+        
+        // === 2FA SETUP ===
+        new() { Endpoint = "POST:/auth/2fa/setup-authenticator", Limit = 5, Period = "1h" },
+        new() { Endpoint = "POST:/auth/2fa/setup-email", Limit = 5, Period = "1h" },
+        new() { Endpoint = "POST:/auth/2fa/verify-authenticator-setup", Limit = 10, Period = "1h" },
+        new() { Endpoint = "POST:/auth/2fa/verify-email-setup", Limit = 10, Period = "1h" },
+        
+        // === GENERAL ENDPOINTS ===
         new() { Endpoint = "*:/auth/*", Limit = 30, Period = "10m" },
         new() { Endpoint = "*:/admin/*", Limit = 100, Period = "10m" },
         new() { Endpoint = "*:/profile/*", Limit = 20, Period = "10m" },
         new() { Endpoint = "*:/api/*", Limit = 200, Period = "10m" }
     };
-    opt.EndpointWhitelist = new() {
+    
+    // Endpoint whitelist
+    opt.EndpointWhitelist = new List<string>
+    {
         "GET:/api/csrf-token",
         "GET:/",
         "GET:/favicon.ico"
     };
-    opt.QuotaExceededMessage = "You have exceeded the rate limit. Please try again later.";
-    opt.QuotaExceededResponse = new() { StatusCode = 429, Content = "Too many requests. Please try again later." };
+    
+    // Enable endpoint-specific rate limiting
+    opt.EnableEndpointRateLimiting = true;
+    opt.StackBlockedRequests = false;
+    
+    // Customize response when rate limit exceeded
+    opt.HttpStatusCode = 429;
+    opt.QuotaExceededResponse = new QuotaExceededResponse
+    {
+        Content = "{{ \"error\": \"Rate limit exceeded. Please try again later.\", \"retryAfter\": \"{0}\" }}",
+        ContentType = "application/json"
+    };
+    
+    // Real client IP resolution
+    opt.RealIpHeader = "X-Real-IP";
+    opt.ClientIdHeader = "X-ClientId";
 });
+
 builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 builder.Services.AddInMemoryRateLimiting();
+
+// ============================================
+// AB HIER: var app = builder.Build()
+// KEINE builder.Services mehr ab hier!
+// ============================================
 
 var app = builder.Build();
 
@@ -304,28 +352,6 @@ app.UseCors("DefaultCorsPolicy");
 // Add request validation
 app.UseRequestValidation();
 
-// Add automatic model validation
-builder.Services.Configure<ApiBehaviorOptions>(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        var errors = context.ModelState
-            .Where(e => e.Value?.Errors.Count > 0)
-            .SelectMany(e => e.Value!.Errors.Select(er => new
-            {
-                field = e.Key,
-                message = er.ErrorMessage
-            }))
-            .ToList();
-
-        return new BadRequestObjectResult(new
-        {
-            error = "Validation failed",
-            details = errors
-        });
-    };
-});
-
 // Only enforce HTTPS redirect if explicitly enabled AND not in development
 // When behind a reverse proxy (nginx, traefik), the proxy handles HTTPS
 // and the app receives HTTP traffic internally - no redirect needed
@@ -335,7 +361,7 @@ if (!isDevelopment && enforceHttpsRedirect)
     app.UseHttpsRedirection();
 }
 
-// Swagger UI (only if ENABLE_SWAGGER=true)
+// Swagger UI (only if development)
 if (isDevelopment)
 {
     app.UseSwagger();
@@ -356,25 +382,28 @@ app.Use(async (ctx, next) =>
     // Adjust CSP for Swagger UI if enabled
     var cspPolicy = isDevelopment && ctx.Request.Path.StartsWithSegments("/api/doc")
         ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
-        : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'";
+        : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
     
     ctx.Response.Headers["Content-Security-Policy"] = cspPolicy;
     ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
     ctx.Response.Headers["X-Frame-Options"] = "DENY";
-    ctx.Response.Headers["Referrer-Policy"] = "no-referrer";
+    ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    ctx.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
     // Strict-Transport-Security only in production
     if (!isDevelopment)
-        ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+        ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
 
     await next();
 });
 
 app.UseIpRateLimiting();
+
 var defaultFilesOptions = new DefaultFilesOptions();
 defaultFilesOptions.DefaultFileNames.Clear();
 defaultFilesOptions.DefaultFileNames.Add("index.html");
 app.UseDefaultFiles(defaultFilesOptions);
+
 app.UseStaticFiles();
 app.UseAuthentication();
 
@@ -462,7 +491,7 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
-            logger.LogWarning("DEFAULT_ADMIN_EMAIL or DEFAULT_ADMIN_PASSWORD not configured and DEFAULT_ADMIN_USERNAME is not set. Skipping admin user creation.");
+            logger.LogWarning("DEFAULT_ADMIN_EMAIL or DEFAULT_ADMIN_PASSWORD not configured. Skipping admin user creation.");
         }
         else
         {
