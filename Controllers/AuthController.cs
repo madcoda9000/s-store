@@ -18,6 +18,8 @@ namespace sstore.Controllers
         private readonly ISecureCodeGenerator _codeGenerator;
         private readonly ITemporaryTokenService _tokenService;
         private readonly ISecurityNotificationService _securityNotification;
+        private readonly ISessionManagementService _sessionManagement;
+
         private readonly IAntiforgery _anti;
         private readonly ISecureLogService _log;
 
@@ -31,6 +33,7 @@ namespace sstore.Controllers
         /// <param name="codeGenerator">Secure code generator</param>
         /// <param name="tokenService">Temporary token service</param>
         /// <param name="notificationService">Security notification service</param>
+        /// <param name="sessionManagement">Session management service</param>
         public AuthController(
             SignInManager<ApplicationUser> signIn,
             UserManager<ApplicationUser> users,
@@ -38,7 +41,8 @@ namespace sstore.Controllers
             ISecureLogService log,
             ISecureCodeGenerator codeGenerator,
             ITemporaryTokenService tokenService,
-            ISecurityNotificationService notificationService)
+            ISecurityNotificationService notificationService,
+            ISessionManagementService sessionManagement)
         {
             _signIn = signIn;
             _users = users;
@@ -47,6 +51,7 @@ namespace sstore.Controllers
             _codeGenerator = codeGenerator;
             _tokenService = tokenService;
             _securityNotification = notificationService;
+            _sessionManagement = sessionManagement;
         }
 
         /// <summary>
@@ -204,6 +209,9 @@ namespace sstore.Controllers
                 return Unauthorized(new { error = "Invalid credentials" });
             }
 
+            // CRITICAL: Regenerate session cookie to prevent session fixation
+            await _sessionManagement.RegenerateCookieAsync(user, dto.RememberMe, "Successful login");
+
             // Check if 2FA is enforced but not yet configured
             if (user.TwoFactorEnforced == 1 && !user.TwoFactorEnabled)
             {
@@ -248,6 +256,21 @@ namespace sstore.Controllers
                     "Failed 2FA authenticator verification attempt");
                 return Unauthorized(new { error = "Invalid 2FA code" });
             }
+
+            // Get user to regenerate session
+            var user = await _signIn.GetTwoFactorAuthenticationUserAsync();
+            if (user == null)
+            {
+                await _log.LogErrorAsync(
+                    "2FAVerification",
+                    "AuthController",
+                    "User not found after successful 2FA verification");
+                return Unauthorized(new { error = "Invalid 2FA session" });
+            }
+
+            // CRITICAL: Regenerate session cookie after 2FA verification
+            await _sessionManagement.RegenerateCookieAsync(user, isPersistent: true, "Successful 2FA verification");
+
 
             await _log.LogAuditAsync(
                 "2FAVerification",
@@ -297,8 +320,8 @@ namespace sstore.Controllers
                 return Unauthorized(new { error = "Invalid or expired 2FA code" });
             }
 
-            // Sign in the user
-            await _signIn.SignInAsync(user, isPersistent: true);
+            // CRITICAL: Regenerate session cookie after 2FA verification
+            await _sessionManagement.RegenerateCookieAsync(user, isPersistent: true, "Successful 2FA email verification");
 
             await _log.LogAuditAsync(
                 "2FAEmailVerification",
