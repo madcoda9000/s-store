@@ -17,6 +17,7 @@ namespace sstore.Controllers
         private readonly UserManager<ApplicationUser> _users;
         private readonly ISecureCodeGenerator _codeGenerator;
         private readonly ITemporaryTokenService _tokenService;
+        private readonly ISecurityNotificationService _securityNotification;
         private readonly IAntiforgery _anti;
         private readonly ISecureLogService _log;
 
@@ -29,13 +30,15 @@ namespace sstore.Controllers
         /// <param name="log">Logging service</param>
         /// <param name="codeGenerator">Secure code generator</param>
         /// <param name="tokenService">Temporary token service</param>
+        /// <param name="notificationService">Security notification service</param>
         public AuthController(
             SignInManager<ApplicationUser> signIn,
             UserManager<ApplicationUser> users,
             IAntiforgery anti,
             ISecureLogService log,
             ISecureCodeGenerator codeGenerator,
-            ITemporaryTokenService tokenService)
+            ITemporaryTokenService tokenService,
+            ISecurityNotificationService notificationService)
         {
             _signIn = signIn;
             _users = users;
@@ -43,6 +46,7 @@ namespace sstore.Controllers
             _log = log;
             _codeGenerator = codeGenerator;
             _tokenService = tokenService;
+            _securityNotification = notificationService;
         }
 
         /// <summary>
@@ -166,9 +170,30 @@ namespace sstore.Controllers
 
             if (!res.Succeeded)
             {
-                var reason = res.IsLockedOut ? "Account locked out" :
-                            res.IsNotAllowed ? "Login not allowed" :
-                            "Invalid credentials";
+                // Check for lockout BEFORE generic error handling
+                if (res.IsLockedOut)
+                {
+                    // Get lockout end time
+                    var lockoutEnd = await _users.GetLockoutEndDateAsync(user);
+                    var failedAttempts = await _users.GetAccessFailedCountAsync(user);
+
+                    // Send lockout notification
+                    await _securityNotification.NotifyAccountLockoutAsync(
+                        user,
+                        failedAttempts,
+                        lockoutEnd ?? DateTimeOffset.UtcNow.AddMinutes(10)
+                    );
+
+                    await _log.LogAuditAsync(
+                        "LoginAttempt",
+                        "AuthController",
+                        $"Account locked out after {failedAttempts} failed attempts",
+                        user.Email ?? user.UserName);
+
+                    return Unauthorized(new { error = "Account is locked. Check your email for details." });
+                }
+
+                var reason = res.IsNotAllowed ? "Login not allowed" : "Invalid credentials";
 
                 await _log.LogAuditAsync(
                     "LoginAttempt",
@@ -338,6 +363,12 @@ namespace sstore.Controllers
             await _users.ResetAuthenticatorKeyAsync(user);
             user.TwoFactorMethod = null;
             await _users.UpdateAsync(user);
+
+            // Send 2FA reset by admin notification
+            await _securityNotification.NotifyTwoFactorResetByAdminAsync(
+                user,
+                currentUser?.Email ?? currentUser?.UserName ?? "Unknown Admin"
+            );
 
             await _log.LogAuditAsync(
                 "Reset2FA",
@@ -599,6 +630,9 @@ namespace sstore.Controllers
             await _users.ResetAuthenticatorKeyAsync(user);
             user.TwoFactorMethod = null;
             await _users.UpdateAsync(user);
+
+            // Send 2FA disabled notification
+            await _securityNotification.NotifyTwoFactorDisabledAsync(user);
 
             await _log.LogAuditAsync(
                 "Disable2FA",
@@ -1171,6 +1205,9 @@ namespace sstore.Controllers
             // Update security stamp to invalidate existing login sessions
             await _users.UpdateSecurityStampAsync(user);
 
+            // Send password changed notification
+            await _securityNotification.NotifyPasswordChangedAsync(user);
+
             await _log.LogAuditAsync(
                 "ResetPasswordSuccess",
                 "AuthController",
@@ -1218,7 +1255,8 @@ namespace sstore.Controllers
     /// <summary>
     /// Validated 2FA email verification DTO
     /// </summary>
-    public record VerifyEmail2FaDto {
+    public record VerifyEmail2FaDto
+    {
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]
         public required string Email { get; init; }
@@ -1232,7 +1270,8 @@ namespace sstore.Controllers
     /// <summary>
     /// Validated 2FA setup DTO
     /// </summary>
-    public record VerifySetup2FaDto {
+    public record VerifySetup2FaDto
+    {
         [Required(ErrorMessage = "2FA code is required")]
         [StringLength(6, MinimumLength = 6, ErrorMessage = "2FA code must be exactly 6 digits")]
         public required string Code { get; init; }
@@ -1241,11 +1280,12 @@ namespace sstore.Controllers
     /// <summary>
     /// Validated 2FA reset DTO
     /// </summary>
-    public record Reset2FaDto {
+    public record Reset2FaDto
+    {
         [Required(ErrorMessage = "User ID is required")]
         [StringLength(256, MinimumLength = 3, ErrorMessage = "User ID must be between 3 and 256 characters")]
         public required string UserId { get; init; }
-    
+
     };
 
     /// <summary>
@@ -1279,7 +1319,8 @@ namespace sstore.Controllers
     /// <summary>
     /// Validated email verification DTO
     /// </summary>
-    public record VerifyEmailDto {
+    public record VerifyEmailDto
+    {
         [Required(ErrorMessage = "User ID is required")]
         [StringLength(128, ErrorMessage = "User ID must not exceed 128 characters")]
         public required string UserId { get; init; }
@@ -1308,21 +1349,23 @@ namespace sstore.Controllers
     /// <summary>
     /// Validated resend verification DTO
     /// </summary>
-    public record ResendVerificationDto {
+    public record ResendVerificationDto
+    {
         [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")] 
+        [EmailAddress(ErrorMessage = "Invalid email format")]
         public required string Email { get; init; }
     };
 
     /// <summary>
     /// Validated forgot password DTO
     /// </summary>
-    public record ForgotPasswordDto {
+    public record ForgotPasswordDto
+    {
         [Required(ErrorMessage = "Email is required")]
-        [EmailAddress(ErrorMessage = "Invalid email format")] 
-        public required string Email { get; init; } 
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public required string Email { get; init; }
     };
-    
+
     /// <summary>
     /// Validated password reset DTO
     /// </summary>

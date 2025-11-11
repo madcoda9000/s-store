@@ -67,6 +67,9 @@ builder.Services.AddDbContext<AppDb>(opt =>
 // Register HttpContextAccessor for accessing current user context
 builder.Services.AddHttpContextAccessor();
 
+// Register Security Notification Service
+builder.Services.AddScoped<ISecurityNotificationService, SecurityNotificationService>();
+
 // add DataProtection service
 builder.Services.AddScoped<IDataProtectionService, DataProtectionService>();
 
