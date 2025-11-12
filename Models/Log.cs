@@ -52,5 +52,9 @@ namespace sstore.Models
         /// </summary>
         [Required]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        /// <summary>
+        /// Encrypted user info
+        /// </summary>
+        [MaxLength(512)]public string? EncryptedUserInfo { get; set; }
     }
 }

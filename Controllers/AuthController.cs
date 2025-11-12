@@ -107,8 +107,8 @@ namespace sstore.Controllers
                 await _log.LogAuditAsync(
                     "LoginAttempt",
                     "AuthController",
-                    $"Failed login attempt for non-existent user: {dto.Username}",
-                    "anonymous");
+                    $"Failed login attempt for non-existent user",
+                    dto.Username);
                 return Unauthorized(new { error = "Invalid credentials" });
             }
 
@@ -276,7 +276,8 @@ namespace sstore.Controllers
             await _log.LogAuditAsync(
                 "2FAVerification",
                 "AuthController",
-                "Successful 2FA authenticator verification");
+                "Successful 2FA authenticator verification",
+                user.Email ?? user.UserName);
 
             // Generate and return new CSRF token after successful 2FA verification
             var tokens = _anti.GetAndStoreTokens(HttpContext);
@@ -397,7 +398,7 @@ namespace sstore.Controllers
             await _log.LogAuditAsync(
                 "Reset2FA",
                 "AuthController",
-                $"Admin reset 2FA and disabled 2fa for user: {user.Email ?? user.UserName}",
+                $"Admin reset 2FA and disabled 2fa for user",
                 currentUser?.Email ?? currentUser?.UserName);
 
             // Generate and return new CSRF token
@@ -738,6 +739,9 @@ namespace sstore.Controllers
                     return;
                 }
 
+                // add new user to User group
+                await _users.AddToRoleAsync(user, "User");
+
                 // Generate email verification token
                 var verificationToken = await _users.GenerateEmailConfirmationTokenAsync(user);
 
@@ -898,7 +902,7 @@ namespace sstore.Controllers
                 await _log.LogErrorAsync(
                     "VerifyEmailCode",
                     "AuthController",
-                    $"Email verification attempted for non-existent email: {dto.Email}");
+                    "Email verification attempted for non-existent email", dto.Email);
                 return BadRequest(new { error = "Invalid email or code" });
             }
 
@@ -970,8 +974,8 @@ namespace sstore.Controllers
                     await _log.LogMailAsync(
                         "VerifyEmailCode",
                         "AuthController",
-                        $"Welcome email queued for {user.Email}",
-                        User.Identity?.Name
+                        $"Welcome email queued",
+                        user.Email
                     );
                 }
             }

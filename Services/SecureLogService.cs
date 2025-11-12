@@ -7,7 +7,9 @@ using sstore.Models;
 namespace sstore.Services
 {
     /// <summary>
-    /// UPDATED LogService with pseudonymization
+    /// Secure logging service with dual privacy approach:
+    /// - Pseudonymization (one-way) for tracking
+    /// - Encryption (reversible) for audit investigation
     /// </summary>
     public class SecureLogService : ISecureLogService
     {
@@ -61,9 +63,23 @@ namespace sstore.Services
         /// <inheritdoc/>
         public async Task<Log> LogAsync(LogCategory category, string action, string context, string message, string? user = null)
         {
-            // Get user identifier and pseudonymize it
+            // Get user identifier
             var userIdentifier = await GetUserIdentifierAsync(user);
+            
+            // Always pseudonymize for tracking and correlation
             var pseudonymizedUser = _dataProtection.PseudonymizeEmail(userIdentifier);
+
+            // For AUDIT and ERROR logs: Also encrypt the actual identifier (reversible)
+            // For other logs (REQUEST, SYSTEM, MAIL): No encryption needed
+            string? encryptedUserInfo = null;
+            if (category == LogCategory.AUDIT || category == LogCategory.ERROR)
+            {
+                // Only encrypt if not "anonymous" or "system"
+                if (userIdentifier != "anonymous" && userIdentifier != "system")
+                {
+                    encryptedUserInfo = _dataProtection.EncryptUserInfo(userIdentifier);
+                }
+            }
 
             var logEntry = new Log
             {
@@ -71,7 +87,8 @@ namespace sstore.Services
                 Action = action,
                 Context = context,
                 Message = message, // Message should not contain PII
-                User = pseudonymizedUser, // Store pseudonymized identifier
+                User = pseudonymizedUser, // Pseudonymized for tracking
+                EncryptedUserInfo = encryptedUserInfo, // Encrypted for investigation (only AUDIT/ERROR)
                 Timestamp = DateTime.UtcNow
             };
 

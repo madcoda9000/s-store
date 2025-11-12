@@ -32,14 +32,14 @@ namespace sstore.Services
             var isValid = await emailSender.ValidateConfigurationAsync();
 
             _logger.LogInformation("Email Background Service started");
-            await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email Background Service started", "SYSTEM");
+            await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email Background Service started", "system");
 
 
             // Validate configuration on startup
             if (!isValid)
             {
                 _logger.LogWarning("Email configuration validation failed. Service will continue but emails may fail to send.");
-                await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email configuration validation failed. Service will continue but emails may fail to send.", "SYSTEM");
+                await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email configuration validation failed. Service will continue but emails may fail to send.", "system");
             }
 
             while (!stoppingToken.IsCancellationRequested)
@@ -51,7 +51,7 @@ namespace sstore.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error occurred while processing email queue");
-                    await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Error occurred while processing email queue", "SYSTEM");
+                    await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Error occurred while processing email queue", "system");
                 }
 
                 // Wait for configured interval before next processing cycle
@@ -59,7 +59,7 @@ namespace sstore.Services
             }
 
             _logger.LogInformation("Email Background Service stopped");
-            await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email Background Service stopped", "SYSTEM");
+            await logService.LogMailAsync("ExecuteAsync", "EmailBackgroundService", "Email Background Service stopped", "system");
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace sstore.Services
             }
 
             _logger.LogInformation("Processing {Count} pending email jobs", pendingJobs.Count);
-            await logService.LogMailAsync("ProcessEmailQueueAsync", "EmailBackgroundService", $"Processing {pendingJobs.Count} pending email jobs", "SYSTEM");
+            await logService.LogMailAsync("ProcessEmailQueueAsync", "EmailBackgroundService", $"Processing {pendingJobs.Count} pending email jobs", "system");
 
             foreach (var job in pendingJobs)
             {
@@ -99,7 +99,7 @@ namespace sstore.Services
                         "ProcessEmailQueueAsync",
                         "EmailBackgroundService",
                         $"Processing email job {job.Id}: {job.TemplateName} to {job.ToEmail}",
-                        job.TriggeredBy
+                        "system"
                     );
 
                     // Update status to Processing
@@ -118,7 +118,7 @@ namespace sstore.Services
                             "ProcessEmailQueueAsync",
                             "EmailBackgroundService",
                             $"Email successfully sent to {job.ToEmail} with subject '{job.Subject}'",
-                            job.TriggeredBy
+                            "system"
                         );
                     }
                     else
@@ -130,7 +130,7 @@ namespace sstore.Services
                             "ProcessEmailQueueAsync",
                             "EmailBackgroundService",
                             $"Email to {job.ToEmail} failed. Retry scheduled for {job.ScheduledFor}.",
-                            job.TriggeredBy
+                            "system"
                         );
                     }
                 }
@@ -144,14 +144,14 @@ namespace sstore.Services
                         "ProcessEmailQueueAsync",
                         "EmailBackgroundService",
                         $"Template not found: {ex.Message}",
-                        job.TriggeredBy
+                        "system"
                     )
                     ;
                     await logService.LogMailAsync(
                         "ProcessEmailQueueAsync",
                         "EmailBackgroundService",
                         $"Template not found: {ex.Message}",
-                        job.TriggeredBy
+                        "system"
                     );
                 }
                 catch (Exception ex)
@@ -163,13 +163,13 @@ namespace sstore.Services
                         "ProcessEmailQueueAsync",
                         "EmailBackgroundService",
                         $"Error processing email to {job.ToEmail}: {ex.Message}",
-                        job.TriggeredBy
+                        "system"
                     );
                     await logService.LogMailAsync(
                         "ProcessEmailQueueAsync",
                         "EmailBackgroundService",
                         $"Error processing email to {job.ToEmail}: {ex.Message}",
-                        job.TriggeredBy
+                        "system"
                     );
 
                     _logger.LogError(ex, "Error processing email job {JobId}", job.Id);
@@ -189,7 +189,7 @@ namespace sstore.Services
             var logService = scope.ServiceProvider.GetRequiredService<ISecureLogService>();
 
             _logger.LogInformation("Email Background Service is stopping...");
-            await logService.LogMailAsync("StopAsync", "EmailBackgroundService", "Email Background Service is stopping...", "SYSTEM");
+            await logService.LogMailAsync("StopAsync", "EmailBackgroundService", "Email Background Service is stopping...", "system");
             await base.StopAsync(stoppingToken);
         }
     }

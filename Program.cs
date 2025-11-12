@@ -467,12 +467,12 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
         // Step 2: Create default Admin role if it doesn't exist
         const string adminRoleName = "Admin";
-        
+
         if (!await roleManager.RoleExistsAsync(adminRoleName))
         {
             logger.LogInformation($"Creating '{adminRoleName}' role...");
             var roleResult = await roleManager.CreateAsync(new IdentityRole(adminRoleName));
-            
+
             if (roleResult.Succeeded)
             {
                 logger.LogInformation($"'{adminRoleName}' role created successfully.");
@@ -486,6 +486,51 @@ async static Task InitializeDatabaseAsync(WebApplication app)
         {
             logger.LogInformation($"'{adminRoleName}' role already exists.");
         }
+
+        // Step 2.1: Create default AuditInvestigator role if it doesn't exist
+        const string AuditInvestigatorRole = "AuditInvestigator";
+
+        if (!await roleManager.RoleExistsAsync(AuditInvestigatorRole))
+        {
+            logger.LogInformation($"Creating '{AuditInvestigatorRole}' role...");
+            var roleResult = await roleManager.CreateAsync(new IdentityRole(AuditInvestigatorRole));
+
+            if (roleResult.Succeeded)
+            {
+                logger.LogInformation($"'{AuditInvestigatorRole}' role created successfully.");
+            }
+            else
+            {
+                logger.LogError($"Failed to create '{AuditInvestigatorRole}' role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        else
+        {
+            logger.LogInformation($"'{AuditInvestigatorRole}' role already exists.");
+        }
+        
+        // Step 2.2: Create default User role if it doesn't exist
+        const string UserRole = "User";
+
+        if (!await roleManager.RoleExistsAsync(UserRole))
+        {
+            logger.LogInformation($"Creating '{UserRole}' role...");
+            var roleResult = await roleManager.CreateAsync(new IdentityRole(UserRole));
+
+            if (roleResult.Succeeded)
+            {
+                logger.LogInformation($"'{UserRole}' role created successfully.");
+            }
+            else
+            {
+                logger.LogError($"Failed to create '{UserRole}' role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+            }
+        }
+        else
+        {
+            logger.LogInformation($"'{UserRole}' role already exists.");
+        }
+
 
         // Step 3: Create default admin user if it doesn't exist
         var adminEmail = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_EMAIL");
@@ -518,22 +563,32 @@ async static Task InitializeDatabaseAsync(WebApplication app)
                 {
                     logger.LogInformation($"Default admin user '{adminEmail}' created successfully.");
 
-                    // Add user to Admin role
-                    var addToRoleResult = await userManager.AddToRoleAsync(adminUser, adminRoleName);
-                    
-                    if (addToRoleResult.Succeeded)
+                    // Add user to Admin role and AuditInvestigator role
+                    var addToRoleResult1 = await userManager.AddToRoleAsync(adminUser, adminRoleName);
+                    var addToRoleResult2 = await userManager.AddToRoleAsync(adminUser, AuditInvestigatorRole);
+
+                    if (addToRoleResult1.Succeeded)
                     {
                         logger.LogInformation($"User '{adminEmail}' added to '{adminRoleName}' role.");
                     }
                     else
                     {
-                        logger.LogError($"Failed to add user to '{adminRoleName}' role: {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
+                        logger.LogError($"Failed to add user to '{adminRoleName}' role: {string.Join(", ", addToRoleResult1.Errors.Select(e => e.Description))}");
                     }
-                }
-                else
-                {
-                    logger.LogError($"Failed to create default admin user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
-                }
+
+                    if (addToRoleResult2.Succeeded)
+                    {
+                        logger.LogInformation($"User '{adminEmail}' added to '{AuditInvestigatorRole}' role.");
+                    }
+                    else
+                    {
+                        logger.LogError($"Failed to add user to '{AuditInvestigatorRole}' role: {string.Join(", ", addToRoleResult2.Errors.Select(e => e.Description))}");
+                    }
+                    }
+                    else
+                    {
+                        logger.LogError($"Failed to create default admin user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                    }
             }
             else
             {

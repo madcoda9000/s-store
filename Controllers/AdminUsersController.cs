@@ -6,6 +6,7 @@ using sstore.Models;
 using Microsoft.AspNetCore.Antiforgery;
 using sstore.Filters;
 using System.ComponentModel.DataAnnotations;
+using sstore.Data;
 
 namespace sstore.Controllers
 {
@@ -15,7 +16,7 @@ namespace sstore.Controllers
     public class AdminUsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _users;
-
+        private readonly AppDb _context;
         private readonly ISecureLogService _log;
         private readonly IAntiforgery _anti;
         /// <summary>
@@ -24,11 +25,13 @@ namespace sstore.Controllers
         /// <param name="users">The user manager to use for retrieving and updating user data.</param>
         /// <param name="log">The log service to use for logging operations.</param>
         /// <param name="anti">The antiforgery service to use for validating anti-forgery tokens.</param>
-        public AdminUsersController(UserManager<ApplicationUser> users, ISecureLogService log, IAntiforgery anti)
+        /// <param name="context">The database context to use for accessing user data.</param>
+        public AdminUsersController(UserManager<ApplicationUser> users, ISecureLogService log, IAntiforgery anti, AppDb context)
         {
             this._users = users;
             this._log = log;
             _anti = anti;
+            _context = context;
         }
 
         /// <summary>
@@ -40,9 +43,29 @@ namespace sstore.Controllers
         [HttpGet("")]
         public IActionResult List([FromQuery] int page = 1, [FromQuery] int size = 20)
         {
-            var q = _users.Users.OrderBy(u => u.UserName).Skip((page - 1) * size).Take(size)
-                .Select(u => new { u.Id, u.UserName, u.Email, u.TwoFactorEnabled, u.LockoutEnd, u.TwoFactorEnforced, u.TwoFactorMethod, u.LdapLoginEnabled });
-            return Ok(q);
+            var q = from u in _context.Users
+                    orderby u.UserName
+                    select new
+                    {
+                        u.Id,
+                        u.UserName,
+                        u.Email,
+                        u.TwoFactorEnabled,
+                        u.LockoutEnd,
+                        u.TwoFactorEnforced,
+                        u.TwoFactorMethod,
+                        u.LdapLoginEnabled,
+                        Roles = (from ur in _context.UserRoles
+                                 join r in _context.Roles on ur.RoleId equals r.Id
+                                 where ur.UserId == u.Id
+                                 select r.Name).ToList()
+                    };
+
+            var result = q.Skip((page - 1) * size)
+                          .Take(size)
+                          .ToList();
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -56,10 +79,10 @@ namespace sstore.Controllers
         {
             var currentUser = await _users.GetUserAsync(User);
             var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";
-            var u = new ApplicationUser 
-            { 
-                UserName = dto.Username, 
-                Email = dto.Email, 
+            var u = new ApplicationUser
+            {
+                UserName = dto.Username,
+                Email = dto.Email,
                 EmailConfirmed = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -90,7 +113,7 @@ namespace sstore.Controllers
             if (u is null) return NotFound();
 
             var currentUser = await _users.GetUserAsync(User);
-            var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";  
+            var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";
 
             u.Email = dto.Email ?? u.Email;
             u.UserName = dto.Username ?? u.UserName;
@@ -121,7 +144,7 @@ namespace sstore.Controllers
             if (u is null) return NotFound();
 
             var currentUser = await _users.GetUserAsync(User);
-            var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";    
+            var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";
 
             await _users.SetLockoutEndDateAsync(u, DateTimeOffset.MaxValue);
 
@@ -151,7 +174,7 @@ namespace sstore.Controllers
             var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";
 
             await _users.SetLockoutEndDateAsync(u, null);
-            
+
             await _log.LogAuditAsync(
                 "enable",
                 "AdminUsersController",

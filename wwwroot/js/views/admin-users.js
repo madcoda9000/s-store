@@ -47,8 +47,7 @@ export function registerAdminUsers(route) {
             <button class="btn btn-primary" id="add-user-btn">Add User</button>
           </div>
           
-          <div class="card">
-            <div class="table-container">
+          <div class="table-container">
               <table class="table">
                 <thead>
                   <tr>
@@ -65,7 +64,6 @@ export function registerAdminUsers(route) {
                 </tbody>
               </table>
             </div>
-          </div>
           
           <div id="message" class="alert alert-success hidden"></div>
         </div>`;
@@ -228,7 +226,6 @@ function renderUserRow(user) {
               data-current-status="${isActive ? 'active' : 'disabled'}">
             <span class="toggle-slider"></span>
           </label>
-          <span class="toggle-label">${isActive ? 'Active' : 'Disabled'}</span>
         </div>
       </td>
       <td>
