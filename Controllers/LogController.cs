@@ -4,6 +4,8 @@ using sstore.Filters;
 using sstore.Models;
 using sstore.Services;
 using Microsoft.AspNetCore.Antiforgery;
+using sstore.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace sstore.Controllers
 {
@@ -17,11 +19,13 @@ namespace sstore.Controllers
     {
         private readonly ISecureLogService _log;
         private readonly IAntiforgery _anti;
+        private readonly AppDb _db;
 
-        public LogController(ISecureLogService log, IAntiforgery anti)
+        public LogController(ISecureLogService log, IAntiforgery anti, AppDb db)
         {
             _log = log;
             _anti = anti;
+            _db = db;
         }
 
         /// <summary>
@@ -123,6 +127,106 @@ namespace sstore.Controllers
                 csrfToken = tokens.RequestToken
             });
         }
+
+        // ===== GET ENDPOINTS FOR LOG RETRIEVAL =====
+
+        // NOTE: Audit and Error logs are handled by AuditInvestigationController
+        // at /admin/audit because they contain sensitive encrypted user data
+        // that requires special handling and justification for decryption
+
+        /// <summary>
+        /// Retrieves system logs with pagination
+        /// </summary>
+        /// <param name="page">Page number (default: 1)</param>
+        /// <param name="size">Page size (default: 50, max: 100)</param>
+        /// <returns>Paginated list of system logs</returns>
+        [HttpGet("system")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetSystemLogs([FromQuery] int page = 1, [FromQuery] int size = 50)
+        {
+            if (size > 100) size = 100;
+            if (page < 1) page = 1;
+
+            var query = _db.Logs
+                .Where(l => l.Category == LogCategory.SYSTEM)
+                .OrderByDescending(l => l.Timestamp)
+                .Select(l => new LogResponseDto
+                {
+                    Id = l.Id,
+                    User = l.User,
+                    Action = l.Action,
+                    Context = l.Context,
+                    Message = l.Message,
+                    Category = l.Category.ToString(),
+                    Timestamp = l.Timestamp
+                });
+
+            var total = await query.CountAsync();
+            var logs = await query
+                .Skip((page - 1) * size)
+                .Take(size)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                logs,
+                pagination = new
+                {
+                    page,
+                    size,
+                    total,
+                    totalPages = (int)Math.Ceiling(total / (double)size)
+                }
+            });
+        }
+
+
+
+        /// <summary>
+        /// Retrieves mail logs with pagination
+        /// </summary>
+        /// <param name="page">Page number (default: 1)</param>
+        /// <param name="size">Page size (default: 50, max: 100)</param>
+        /// <returns>Paginated list of mail logs</returns>
+        [HttpGet("mail")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetMailLogs([FromQuery] int page = 1, [FromQuery] int size = 50)
+        {
+            if (size > 100) size = 100;
+            if (page < 1) page = 1;
+
+            var query = _db.Logs
+                .Where(l => l.Category == LogCategory.MAIL)
+                .OrderByDescending(l => l.Timestamp)
+                .Select(l => new LogResponseDto
+                {
+                    Id = l.Id,
+                    User = l.User,
+                    Action = l.Action,
+                    Context = l.Context,
+                    Message = l.Message,
+                    Category = l.Category.ToString(),
+                    Timestamp = l.Timestamp
+                });
+
+            var total = await query.CountAsync();
+            var logs = await query
+                .Skip((page - 1) * size)
+                .Take(size)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                logs,
+                pagination = new
+                {
+                    page,
+                    size,
+                    total,
+                    totalPages = (int)Math.Ceiling(total / (double)size)
+                }
+            });
+        }
     }
 
     /// <summary>
@@ -170,5 +274,46 @@ namespace sstore.Controllers
         /// Detailed log message
         /// </summary>
         public string Message { get; init; } = string.Empty;
+    }
+
+    /// <summary>
+    /// DTO for log responses (without sensitive encrypted data)
+    /// </summary>
+    public record LogResponseDto
+    {
+        /// <summary>
+        /// Unique identifier for the log entry
+        /// </summary>
+        public long Id { get; init; }
+
+        /// <summary>
+        /// Pseudonymized user identifier
+        /// </summary>
+        public string User { get; init; } = string.Empty;
+
+        /// <summary>
+        /// The action that was executed
+        /// </summary>
+        public string Action { get; init; } = string.Empty;
+
+        /// <summary>
+        /// The context where the action occurred
+        /// </summary>
+        public string Context { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Detailed message describing what happened
+        /// </summary>
+        public string Message { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Category of the log entry
+        /// </summary>
+        public string Category { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Timestamp when the log entry was created
+        /// </summary>
+        public DateTime Timestamp { get; init; }
     }
 }

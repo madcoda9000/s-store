@@ -108,6 +108,40 @@ function initializeGlobalEvents() {
       }
     }
     
+    // Handle navigation dropdown toggles
+    const navDropdownToggle = target.closest('.nav-dropdown-toggle');
+    if (navDropdownToggle) {
+      e.stopPropagation();
+      const dropdownMenu = navDropdownToggle.nextElementSibling;
+      
+      if (dropdownMenu && dropdownMenu.classList.contains('nav-dropdown-menu')) {
+        // Close other nav dropdowns
+        document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+          if (menu !== dropdownMenu) {
+            menu.classList.remove('show');
+          }
+        });
+        
+        // Toggle this dropdown
+        dropdownMenu.classList.toggle('show');
+        
+        // Close other menus
+        const profileMenu = document.getElementById('profile-menu');
+        if (profileMenu) profileMenu.classList.remove('show');
+        
+        const languageMenu = document.getElementById('language-menu');
+        if (languageMenu) languageMenu.classList.remove('show');
+      }
+      return;
+    }
+    
+    // Close nav dropdowns when clicking outside
+    if (!target.closest('.nav-dropdown')) {
+      document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
+    }
+    
     // Handle profile dropdown toggle
     const profileMenu = document.getElementById('profile-menu');
     
@@ -121,6 +155,11 @@ function initializeGlobalEvents() {
         if (languageMenu) {
           languageMenu.classList.remove('show');
         }
+        
+        // Close nav dropdowns
+        document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+          menu.classList.remove('show');
+        });
       }
       return;
     }
@@ -142,6 +181,11 @@ function initializeGlobalEvents() {
         if (profileMenu) {
           profileMenu.classList.remove('show');
         }
+        
+        // Close nav dropdowns
+        document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+          menu.classList.remove('show');
+        });
       }
       return;
     }
@@ -231,6 +275,11 @@ function initializeGlobalEvents() {
       if (languageMenu) {
         languageMenu.classList.remove('show');
       }
+      
+      // Close nav dropdowns
+      document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
     }
   });
   
@@ -247,6 +296,11 @@ function initializeGlobalEvents() {
         if (mobileToggle) mobileToggle.innerHTML = icon(Icons.MENU, 'icon icon-lg');
         document.body.style.overflow = '';
       }
+      
+      // Close all dropdowns on resize
+      document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+        menu.classList.remove('show');
+      });
     }
   });
   
@@ -314,10 +368,34 @@ function updateNavigation(isAdmin) {
   // Always show Home link
   navItems.push('<a href="#/home" class="nav-link">Home</a>');
   
-  // Admin-only links
+  // Admin-only dropdowns
   if (isAdmin) {
-    navItems.push('<a href="#/admin/users" class="nav-link">Users</a>');
-    navItems.push('<a href="#/admin/roles" class="nav-link">Roles</a>');
+    // Administration Dropdown
+    navItems.push(`
+      <div class="nav-dropdown">
+        <button class="nav-link nav-dropdown-toggle" type="button">
+          Administration ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
+        </button>
+        <div class="nav-dropdown-menu">
+          <a href="#/admin/users" class="nav-dropdown-item">${icon(Icons.USERS, 'icon')} Users</a>
+          <a href="#/admin/roles" class="nav-dropdown-item">${icon(Icons.SHIELD, 'icon')} Roles</a>
+        </div>
+      </div>
+    `);
+    
+    // Logs Dropdown
+    navItems.push(`
+      <div class="nav-dropdown">
+        <button class="nav-link nav-dropdown-toggle" type="button">
+          Logs ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
+        </button>
+        <div class="nav-dropdown-menu">
+          <a href="#/admin/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>
+          <a href="#/logs/system" class="nav-dropdown-item">${icon(Icons.SETTINGS, 'icon')} System Logs</a>
+          <a href="#/logs/mail" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Mail Logs</a>
+        </div>
+      </div>
+    `);
   }
   
   // Common links for all authenticated users
