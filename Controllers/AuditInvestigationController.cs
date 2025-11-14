@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,16 +21,19 @@ namespace sstore.Controllers
     {
         private readonly AppDb _db;
         private readonly IDataProtectionService _dataProtection;
+        private readonly IAntiforgery _anti;
         private readonly ISecureLogService _log;
 
         public AuditInvestigationController(
             AppDb db,
             IDataProtectionService dataProtection,
-            ISecureLogService log)
+            ISecureLogService log,
+            IAntiforgery anti)
         {
             _db = db;
             _dataProtection = dataProtection;
             _log = log;
+            _anti = anti;
         }
 
         /// <summary>
@@ -43,7 +47,6 @@ namespace sstore.Controllers
         /// <param name="toDate">Filter logs until this date (optional)</param>
         /// <returns>List of audit logs with optionally decrypted user information</returns>
         [HttpGet]
-        [ValidateAntiForgeryApi]
         public async Task<IActionResult> GetAuditLogs(
             [FromQuery] bool decrypt = false,
             [FromQuery] string? justification = null,
@@ -108,23 +111,29 @@ namespace sstore.Controllers
                     l.Message,
                     l.Timestamp,
                     PseudonymizedUser = l.User,
-                    DecryptedUser = !string.IsNullOrEmpty(l.EncryptedUserInfo) 
+                    DecryptedUser = !string.IsNullOrEmpty(l.EncryptedUserInfo)
                         ? _dataProtection.DecryptUserInfo(l.EncryptedUserInfo)
                         : null
                 }).ToList();
+
+                var tokens = _anti.GetAndStoreTokens(HttpContext);
 
                 return Ok(new
                 {
                     count = results.Count,
                     decrypted = true,
                     justification,
-                    logs = results
+                    logs = results,
+                    csrfToken = tokens.RequestToken
                 });
             }
 
             // Return without decryption
+            var tokenss = _anti.GetAndStoreTokens(HttpContext);
+
             return Ok(new
             {
+                csrfToken = tokenss.RequestToken,
                 count = logs.Count,
                 decrypted = false,
                 logs = logs.Select(l => new
@@ -173,6 +182,8 @@ namespace sstore.Controllers
                 $"Admin decrypted log entry {dto.LogId}. Justification: {dto.Justification}",
                 adminUser);
 
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
             return Ok(new
             {
                 logId = log.Id,
@@ -182,7 +193,8 @@ namespace sstore.Controllers
                 decryptedUser,
                 justification = dto.Justification,
                 decryptedBy = adminUser,
-                decryptedAt = DateTime.UtcNow
+                decryptedAt = DateTime.UtcNow,
+                csrfToken = tokens.RequestToken
             });
         }
 
@@ -194,7 +206,6 @@ namespace sstore.Controllers
         /// <param name="limit">Maximum number of logs to return</param>
         /// <returns>List of logs for the specified pseudonym</returns>
         [HttpGet("by-pseudonym/{pseudonym}")]
-        [ValidateAntiForgeryApi]
         public async Task<IActionResult> GetLogsByPseudonym(
             string pseudonym,
             [FromQuery] int limit = 100)
@@ -214,8 +225,11 @@ namespace sstore.Controllers
                 $"Admin searched logs by pseudonym: {pseudonym}",
                 adminUser);
 
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
             return Ok(new
             {
+                csrfToken = tokens.RequestToken,
                 pseudonym,
                 count = logs.Count,
                 logs = logs.Select(l => new

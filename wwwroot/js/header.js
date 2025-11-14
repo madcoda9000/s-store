@@ -390,7 +390,7 @@ function updateNavigation(isAdmin) {
           Logs ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
         </button>
         <div class="nav-dropdown-menu">
-          <a href="#/admin/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>
+          <a href="#/logs/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>
           <a href="#/logs/system" class="nav-dropdown-item">${icon(Icons.SETTINGS, 'icon')} System Logs</a>
           <a href="#/logs/mail" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Mail Logs</a>
         </div>

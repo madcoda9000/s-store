@@ -2,6 +2,138 @@
 // Global type definitions for JSDoc in JavaScript files
 
 /**
+ * Log entry from backend
+ */
+interface LogEntry {
+  /** Unique log entry ID */
+  id: number;
+  /** Pseudonymized user identifier */
+  user: string;
+  /** Action that triggered the log */
+  action: string;
+  /** Context where action occurred */
+  context: string;
+  /** Detailed log message */
+  message: string;
+  /** Log category (AUDIT, ERROR, SYSTEM, MAIL, REQUEST) */
+  category: string;
+  /** ISO 8601 timestamp */
+  timestamp: string;
+}
+
+/**
+ * Pagination information
+ */
+interface PaginationInfo {
+  /** Current page number */
+  page: number;
+  /** Items per page */
+  size: number;
+  /** Total number of items */
+  total: number;
+  /** Total number of pages */
+  totalPages: number;
+}
+
+/**
+ * API response for log endpoints (LIST)
+ */
+interface LogResponse {
+  /** Array of log entries */
+  logs: LogEntry[];
+  /** Pagination metadata */
+  pagination: PaginationInfo;
+}
+
+/**
+ * Audit log entry with encryption information
+ */
+interface AuditLogEntry {
+  /** Unique log entry ID */
+  id: number;
+  /** Pseudonymized user identifier */
+  user: string;
+  /** Action that triggered the log */
+  action: string;
+  /** Context where action occurred */
+  context: string;
+  /** Detailed log message */
+  message: string;
+  /** Log category (AUDIT or ERROR) */
+  category: string;
+  /** ISO 8601 timestamp */
+  timestamp: string;
+  /** Whether this log has encrypted user info */
+  hasEncryptedInfo: boolean;
+  /** Decrypted username (only present if decrypted) */
+  decryptedUser?: string;
+}
+
+/**
+ * API response for audit log endpoints
+ */
+interface AuditLogResponse {
+  /** Array of audit log entries */
+  logs: AuditLogEntry[];
+  /** Whether logs were returned with decryption */
+  decrypted: boolean;
+  /** Number of logs returned */
+  count: number;
+  /** Justification for decryption (if decrypted=true) */
+  justification?: string;
+}
+
+/**
+ * Decrypt log entry data transfer object
+ */
+interface DecryptLogDto {
+  /** Log entry ID to decrypt */
+  logId: number;
+  /** Reason for decryption (10-500 characters) */
+  justification: string;
+}
+
+/**
+ * Decrypt log entry response
+ */
+interface DecryptLogResponse {
+  /** Log entry ID */
+  logId: number;
+  /** Log timestamp */
+  timestamp: string;
+  /** Log action */
+  action: string;
+  /** Pseudonymized user identifier */
+  pseudonymizedUser: string;
+  /** Decrypted username */
+  decryptedUser: string;
+  /** Justification provided */
+  justification: string;
+  /** Admin who performed decryption */
+  decryptedBy: string;
+  /** ISO timestamp of decryption */
+  decryptedAt: string;
+  /** New CSRF token */
+  csrfToken: string;
+}
+
+/**
+ * Log filter state
+ */
+interface LogFilterState {
+  /** Current page number */
+  currentPage: number;
+  /** Number of items per page */
+  pageSize: number;
+  /** Column to sort by */
+  sortBy: string;
+  /** Sort order */
+  sortOrder: 'asc' | 'desc';
+  /** Current search query */
+  searchQuery: string;
+}
+
+/**
  * User object
  */
 interface User {
@@ -39,9 +171,9 @@ interface AdminUser {
   roles?: string[];
   /** Whether 2FA is enforced by admin (0 = no, 1 = yes) */
   twoFactorEnforced: number;
-  /** the 2fa method **/
+  /** the 2fa method */
   twoFactorMethod: string | null;
-  /** wether ldap login is enabled  **/
+  /** wether ldap login is enabled */
   ldapLoginEnabled: number;
 }
 
@@ -168,13 +300,15 @@ interface CsrfTokenResponse {
 }
 
 /**
- * Log response object
+ * Simple log response object (for create log endpoints)
  */
-interface LogResponse {
+interface SimpleLogResponse {
   /** Log entry ID */
   id: number;
   /** ISO timestamp */
   timestamp: string;
+  /** CSRF token */
+  csrfToken?: string;
 }
 
 /**

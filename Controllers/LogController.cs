@@ -167,8 +167,11 @@ namespace sstore.Controllers
                 .Take(size)
                 .ToListAsync();
 
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
             return Ok(new
             {
+                csrfToken = tokens.RequestToken,
                 logs,
                 pagination = new
                 {
@@ -215,8 +218,11 @@ namespace sstore.Controllers
                 .Take(size)
                 .ToListAsync();
 
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
             return Ok(new
             {
+                csrfToken = tokens.RequestToken,
                 logs,
                 pagination = new
                 {
