@@ -725,6 +725,10 @@ table.grid td {
   border-top: 1px solid var(--color-border);
 }
 
+.loading-container {
+  min-height: 300px;
+}
+
 .table tbody tr,
 table.grid tbody tr {
   transition: var(--transition);

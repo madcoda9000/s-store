@@ -22,8 +22,8 @@ const state = {
  * @param {Function} route - Route registration function
  * @returns {void}
  */
-export function registerMailLogs(route) {
-  route('/logs/mail', async (el) => {
+export function registerRequestLogs(route) {
+  route('/logs/request', async (el) => {
     try {
       // Reset state on route entry
       state.currentPage = 1;
@@ -108,7 +108,7 @@ async function loadLogs(el) {
 
     // Fetch logs
     /** @type {LogResponse} */
-    const response = await api(`/log/mail?${params.toString()}`);
+    const response = await api(`/log/request?${params.toString()}`);
 
     // Filter and sort logs client-side if search is active
     let filteredLogs = response.logs;
@@ -204,7 +204,7 @@ function renderView(data, loading) {
   return `
     <div class="section">
       <div class="section-header">
-        <h2 class="section-title mb-0">${icon(Icons.MAIL, 'icon')} ${t('admin.mailLogs.title')}</h2>
+        <h2 class="section-title mb-0">${icon(Icons.REFRESH_CW, 'icon')} ${t('admin.requestLogs.title')}</h2>
       </div>
 
       ${renderFilters()}
@@ -239,7 +239,7 @@ function renderFilters() {
       <div class="page-size-selector">
         <label for="page-size">${t('admin.logs.showPerPage')}</label>
         <select id="page-size">
-          <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10</option>
+        <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10</option>
           <option value="20" ${state.pageSize === 20 ? 'selected' : ''}>20</option>
           <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50</option>
           <option value="100" ${state.pageSize === 100 ? 'selected' : ''}>100</option>
@@ -260,7 +260,7 @@ function renderLogsTable(data) {
     return `
       <div class="log-empty-state">
         ${icon(Icons.MAIL, 'icon')}
-        <p>${t('admin.mailLogs.noLogsFound')}</p>
+        <p>${t('admin.requestLogs.noLogsFound')}</p>
       </div>
     `;
   }

@@ -76,6 +76,54 @@ builder.Services.AddScoped<IDataProtectionService, DataProtectionService>();
 // Register LogService as scoped service
 builder.Services.AddScoped<ISecureLogService, SecureLogService>();
 
+// Configure request logging
+builder.Services.Configure<RequestLoggingOptions>(options =>
+{
+    options.Enabled = Environment.GetEnvironmentVariable("REQUEST_LOGGING_ENABLED")?.ToLower() == "true";
+    options.LogRequestBodies = Environment.GetEnvironmentVariable("REQUEST_LOGGING_LOG_REQUEST_BODIES")?.ToLower() != "false";
+    options.LogResponseBodies = Environment.GetEnvironmentVariable("REQUEST_LOGGING_LOG_RESPONSE_BODIES")?.ToLower() != "false";
+    options.LogHeaders = Environment.GetEnvironmentVariable("REQUEST_LOGGING_LOG_HEADERS")?.ToLower() != "false";
+
+    // Add these lines for max body sizes
+    options.MaxRequestBodySize = int.TryParse(Environment.GetEnvironmentVariable("REQUEST_LOGGING_MAX_REQUEST_BODY_SIZE"), out var maxReqSize) 
+        ? maxReqSize 
+        : 10 * 1024; // 10KB default
+    
+    options.MaxResponseBodySize = int.TryParse(Environment.GetEnvironmentVariable("REQUEST_LOGGING_MAX_RESPONSE_BODY_SIZE"), out var maxResSize) 
+        ? maxResSize 
+        : 10 * 1024; // 10KB default
+    
+    var includedMethods = Environment.GetEnvironmentVariable("REQUEST_LOGGING_INCLUDED_METHODS");
+    if (!string.IsNullOrEmpty(includedMethods))
+    {
+        options.IncludedMethods = includedMethods
+            .Split(',')
+            .Select(m => m.Trim())
+            .Where(m => !string.IsNullOrEmpty(m))
+            .ToArray();
+    }
+    
+    var excludedPaths = Environment.GetEnvironmentVariable("REQUEST_LOGGING_EXCLUDED_PATHS");
+    if (!string.IsNullOrEmpty(excludedPaths))
+    {
+        options.ExcludedPaths = excludedPaths
+            .Split(',')
+            .Select(p => p.Trim())
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToArray();
+    }
+    
+    var excludedHeaders = Environment.GetEnvironmentVariable("REQUEST_LOGGING_EXCLUDED_HEADERS");
+    if (!string.IsNullOrEmpty(excludedHeaders))
+    {
+        options.ExcludedHeaders = excludedHeaders
+            .Split(',')
+            .Select(h => h.Trim())
+            .Where(h => !string.IsNullOrEmpty(h))
+            .ToArray();
+    }
+});
+
 // Register Email Configuration from environment variables
 var emailConfig = EmailConfiguration.FromEnvironment();
 builder.Services.AddSingleton(emailConfig);
@@ -408,6 +456,10 @@ defaultFilesOptions.DefaultFileNames.Add("index.html");
 app.UseDefaultFiles(defaultFilesOptions);
 
 app.UseStaticFiles();
+
+// Add request logging middleware
+app.UseRequestLogging();
+
 app.UseAuthentication();
 
 // Generate CSRF cookie for any GET request

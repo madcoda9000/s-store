@@ -8,9 +8,11 @@
     "back": "Back",
     "backToHome": "Back to Home",
     "next": "Next",
+    "previous": "Previous",
     "submit": "Submit",
     "close": "Close",
     "loading": "Loading...",
+    "refresh": "Refresh",
     "search": "Search",
     "welcome": "Welcome, {{name}}!",
     "yes": "Yes",
@@ -22,7 +24,8 @@
     "showPwd": "Show password",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "lastUpdate": "Last updated"
+    "lastUpdate": "Last updated",
+    "pagination": "Pagination"
   },
   
   "auth": {
@@ -352,6 +355,18 @@
       "noLogsFound": "No mail logs found",
       "loadingLogs": "Loading mail logs...",
       "recipientContext": "Recipient/Context",
+      "clear": "Clear"
+    },
+    "requestLogs": {
+      "title": "Request Logs",
+      "noLogs": "No request logs found",
+      "loadingLogs": "Loading request logs...",
+      "timestamp": "Timestamp",
+      "user": "User",
+      "action": "Action",
+      "context": "Context",
+      "message": "Message",
+      "searchPlaceholder": "Search by user, action, context, or message...",
       "clear": "Clear"
     },
     "logs": {

@@ -8,9 +8,11 @@
     "back": "Zurück",
     "backToHome": "Zurück zur Startseite",
     "next": "Weiter",
+    "previous": "Zurück",
     "submit": "Absenden",
     "close": "Schließen",
     "loading": "Laden...",
+    "refresh": "Aktualisieren",
     "search": "Suchen",
     "welcome": "Willkommen, {{name}}!",
     "yes": "Ja",
@@ -22,7 +24,8 @@
     "showPwd": "Passwort anzeigen",
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
-    "lastUpdate": "Zuletzt aktualisiert"
+    "lastUpdate": "Zuletzt aktualisiert",
+    "pagination": "Seitennummerierung"
   },
   
   "auth": {
@@ -352,6 +355,18 @@
       "noLogsFound": "Keine Mail Logs gefunden",
       "loadingLogs": "Lade Mail Logs...",
       "recipientContext": "Empfänger/Kontext",
+      "clear": "Löschen"
+    },
+    "requestLogs": {
+      "title": "Anfrage-Protokolle",
+      "noLogs": "Keine Anfrage-Protokolle gefunden",
+      "loadingLogs": "Lade Anfrage-Protokolle...",
+      "timestamp": "Zeitstempel",
+      "user": "Benutzer",
+      "action": "Aktion",
+      "context": "Kontext",
+      "message": "Nachricht",
+      "searchPlaceholder": "Suche nach Benutzer, Aktion, Kontext oder Nachricht...",
       "clear": "Löschen"
     },
     "logs": {

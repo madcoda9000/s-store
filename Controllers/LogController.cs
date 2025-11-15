@@ -233,6 +233,106 @@ namespace sstore.Controllers
                 }
             });
         }
+
+        /// <summary>
+        /// Retrieves HTTP request logs with pagination
+        /// </summary>
+        /// <param name="page">Page number (default: 1)</param>
+        /// <param name="size">Page size (default: 50, max: 100)</param>
+        /// <param name="sortBy">Field to sort by (default: timestamp)</param>
+        /// <param name="sortOrder">Sort order (asc/desc, default: desc)</param>
+        /// <param name="search">Search term (optional)</param>
+        /// <returns>Paginated list of HTTP request logs</returns>
+        [HttpGet("request")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetRequestLogs(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 50,
+            [FromQuery] string sortBy = "timestamp",
+            [FromQuery] string sortOrder = "desc",
+            [FromQuery] string? search = null)
+        {
+            try
+            {
+                if (size > 100) size = 100;
+                if (page < 1) page = 1;
+
+                var query = _db.Logs
+                    .Where(l => l.Category == LogCategory.REQUEST);
+
+                // Apply search filter if provided
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    var searchTerm = search.Trim().ToLower();
+                    query = query.Where(l =>
+                        l.User.ToLower().Contains(searchTerm) ||
+                        l.Action.ToLower().Contains(searchTerm) ||
+                        l.Context.ToLower().Contains(searchTerm) ||
+                        l.Message.ToLower().Contains(searchTerm)
+                    );
+                }
+
+                // Apply sorting
+                query = sortBy.ToLower() switch
+                {
+                    "user" => sortOrder.ToLower() == "asc"
+                        ? query.OrderBy(l => l.User)
+                        : query.OrderByDescending(l => l.User),
+                    "action" => sortOrder.ToLower() == "asc"
+                        ? query.OrderBy(l => l.Action)
+                        : query.OrderByDescending(l => l.Action),
+                    "context" => sortOrder.ToLower() == "asc"
+                        ? query.OrderBy(l => l.Context)
+                        : query.OrderByDescending(l => l.Context),
+                    "timestamp" => sortOrder.ToLower() == "asc"
+                        ? query.OrderBy(l => l.Timestamp)
+                        : query.OrderByDescending(l => l.Timestamp),
+                    _ => query.OrderByDescending(l => l.Timestamp)
+                };
+
+                var total = await query.CountAsync();
+                var logs = await query
+                    .Skip((page - 1) * size)
+                    .Take(size)
+                    .Select(l => new LogResponseDto
+                    {
+                        Id = l.Id,
+                        User = l.User,
+                        Action = l.Action,
+                        Context = l.Context,
+                        Message = l.Message,
+                        Category = l.Category.ToString(),
+                        Timestamp = l.Timestamp
+                    })
+                    .ToListAsync();
+
+                var tokens = _anti.GetAndStoreTokens(HttpContext);
+
+                return Ok(new
+                {
+                    csrfToken = tokens.RequestToken,
+                    logs,
+                    pagination = new
+                    {
+                        page,
+                        size,
+                        total,
+                        totalPages = (int)Math.Ceiling(total / (double)size)
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                await _log.LogErrorAsync(
+                    nameof(GetRequestLogs),
+                    "LogController",
+                    $"Error retrieving request logs: {ex.Message}",
+                    User.Identity?.Name
+                );
+
+                return StatusCode(500, "An error occurred while retrieving request logs");
+            }
+        }
     }
 
     /// <summary>

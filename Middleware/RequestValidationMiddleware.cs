@@ -13,12 +13,21 @@ namespace sstore.Middleware
         private readonly ILogger<RequestValidationMiddleware> _logger;
         private const long MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RequestValidationMiddleware"/> class.
+        /// </summary>
+        /// <param name="next"></param>
+        /// <param name="logger"></param>
         public RequestValidationMiddleware(RequestDelegate next, ILogger<RequestValidationMiddleware> logger)
         {
             _next = next;
             _logger = logger;
         }
 
+        /// <summary>
+        /// Invokes the middleware pipeline and validates the request.
+        /// </summary>
+        /// <param name="context"></param>
         public async Task InvokeAsync(HttpContext context)
         {
             // Check request body size

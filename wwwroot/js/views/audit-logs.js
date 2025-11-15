@@ -654,13 +654,20 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
   const form = /** @type {HTMLFormElement} */ (modal.querySelector('#decrypt-form'));
   const resultDiv = modal.querySelector('#decrypt-result');
 
-  const closeModal = () => {
+  const closeModal = (e) => {
+    e?.stopPropagation();
     modal.remove();
   };
 
   closeBtn?.addEventListener('click', closeModal);
   cancelBtn?.addEventListener('click', closeModal);
-  overlay?.addEventListener('click', closeModal);
+  
+  // Only close when clicking directly on the overlay, not its children
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeModal(e);
+    }
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();

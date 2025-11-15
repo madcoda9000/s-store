@@ -11,7 +11,7 @@ import { hasRole, renderAccessDenied } from '../auth-utils.js';
  */
 const state = {
   currentPage: 1,
-  pageSize: 50,
+  pageSize: 10,
   sortBy: 'timestamp',
   sortOrder: 'desc',
   searchQuery: ''
@@ -27,7 +27,7 @@ export function registerSystemLogs(route) {
     try {
       // Reset state on route entry
       state.currentPage = 1;
-      state.pageSize = 50;
+      state.pageSize = 10;
       state.sortBy = 'timestamp';
       state.sortOrder = 'desc';
       state.searchQuery = '';

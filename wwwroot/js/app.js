@@ -16,6 +16,7 @@ import { registerVerify2fa } from '/js/views/verify-2fa.js';
 import { registerSystemLogs } from './views/system-logs.js';
 import { registerMailLogs } from './views/mail-logs.js';
 import { registerAuditLogs } from './views/audit-logs.js';
+import { registerRequestLogs } from './views/request-logs.js';
 import { icon, Icons } from '/js/icons.js';
 
 /**
@@ -125,7 +126,8 @@ registerSetup2fa(route);
 registerVerify2fa(route);
 registerSystemLogs(route);
 registerMailLogs(route);
-registerAuditLogs(route)
+registerAuditLogs(route);
+registerRequestLogs(route);
 
 // 404 handler
 route('/404', el => {
