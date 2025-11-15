@@ -349,13 +349,28 @@
       "loadingLogs": "Loading system logs...",
       "clear": "Clear"
     },
+    "errorLogs": {
+      "title": "Error Logs",
+      "searchPlaceholder": "Search by action, context, message, or user...",
+      "noLogsFound": "No error logs found",
+      "loadingLogs": "Loading error logs...",
+      "clear": "Clear",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "applyFilters": "Apply Filters",
+      "clearFilters": "Clear Filters"
+    },
     "mailLogs": {
       "title": "Mail Logs",
       "searchPlaceholder": "Search by action, context, message, or user...",
       "noLogsFound": "No mail logs found",
       "loadingLogs": "Loading mail logs...",
       "recipientContext": "Recipient/Context",
-      "clear": "Clear"
+      "clear": "Clear",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "applyFilters": "Apply Filters",
+      "clearFilters": "Clear Filters"
     },
     "requestLogs": {
       "title": "Request Logs",

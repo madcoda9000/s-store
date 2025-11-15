@@ -130,7 +130,7 @@ namespace sstore.Controllers
 
         // ===== GET ENDPOINTS FOR LOG RETRIEVAL =====
 
-        // NOTE: Audit and Error logs are handled by AuditInvestigationController
+        // NOTE: Audit logs are handled by AuditInvestigationController
         // at /admin/audit because they contain sensitive encrypted user data
         // that requires special handling and justification for decryption
 
@@ -190,16 +190,83 @@ namespace sstore.Controllers
         /// </summary>
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="size">Page size (default: 50, max: 100)</param>
+        /// <param name="fromDate">Optional start timestamp filter</param>
+        /// <param name="toDate">Optional end timestamp filter</param>
         /// <returns>Paginated list of mail logs</returns>
         [HttpGet("mail")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetMailLogs([FromQuery] int page = 1, [FromQuery] int size = 50)
+        public async Task<IActionResult> GetMailLogs(
+            [FromQuery] int page = 1,
+            [FromQuery] int size = 50,
+            [FromQuery] DateTime? fromDate = null,
+            [FromQuery] DateTime? toDate = null)
         {
             if (size > 100) size = 100;
             if (page < 1) page = 1;
 
             var query = _db.Logs
                 .Where(l => l.Category == LogCategory.MAIL)
+                .AsQueryable();
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(l => l.Timestamp >= fromDate.Value);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(l => l.Timestamp <= toDate.Value);
+            }
+
+            var orderedQuery = query.OrderByDescending(l => l.Timestamp);
+
+            var total = await orderedQuery.CountAsync();
+            var logs = await orderedQuery
+                .Skip((page - 1) * size)
+                .Take(size)
+                .Select(l => new LogResponseDto
+                {
+                    Id = l.Id,
+                    User = l.User,
+                    Action = l.Action,
+                    Context = l.Context,
+                    Message = l.Message,
+                    Category = l.Category.ToString(),
+                    Timestamp = l.Timestamp
+                })
+                .ToListAsync();
+
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
+            return Ok(new
+            {
+                csrfToken = tokens.RequestToken,
+                logs,
+                pagination = new
+                {
+                    page,
+                    size,
+                    total,
+                    totalPages = (int)Math.Ceiling(total / (double)size)
+                }
+            });
+        }
+
+        /// <summary>
+        /// Retrieves error logs with pagination
+        /// </summary>
+        /// <param name="page">Page number (default: 1)</param>
+        /// <param name="size">Page size (default: 50, max: 100)</param>
+        /// <returns>Paginated list of error logs</returns>
+        [HttpGet("error")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetErrorLogs([FromQuery] int page = 1, [FromQuery] int size = 50)
+        {
+            if (size > 100) size = 100;
+            if (page < 1) page = 1;
+
+            var query = _db.Logs
+                .Where(l => l.Category == LogCategory.ERROR)
                 .OrderByDescending(l => l.Timestamp)
                 .Select(l => new LogResponseDto
                 {

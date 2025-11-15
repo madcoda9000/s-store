@@ -14,8 +14,13 @@ const state = {
   pageSize: 10,
   sortBy: 'timestamp',
   sortOrder: 'desc',
-  searchQuery: ''
+  searchQuery: '',
+  fromDate: '',
+  toDate: ''
 };
+
+/** @type {(e: Event) => void | null} */
+let mailClickHandler = null;
 
 /**
  * Registers the mail logs route
@@ -31,6 +36,8 @@ export function registerMailLogs(route) {
       state.sortBy = 'timestamp';
       state.sortOrder = 'desc';
       state.searchQuery = '';
+      state.fromDate = '';
+      state.toDate = '';
 
       // Fetch current user
       const user = await api('/auth/me');
@@ -97,6 +104,16 @@ async function loadLogs(el) {
       pageSizeSelect.value = state.pageSize.toString();
     }
 
+    const fromDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#from-date'));
+    if (fromDateInput) {
+      fromDateInput.value = state.fromDate;
+    }
+
+    const toDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#to-date'));
+    if (toDateInput) {
+      toDateInput.value = state.toDate;
+    }
+
     // Update clear button visibility
     updateClearButton(el);
 
@@ -105,6 +122,14 @@ async function loadLogs(el) {
       page: state.currentPage.toString(),
       size: state.pageSize.toString()
     });
+
+    if (state.fromDate) {
+      params.append('fromDate', new Date(state.fromDate).toISOString());
+    }
+
+    if (state.toDate) {
+      params.append('toDate', new Date(state.toDate).toISOString());
+    }
 
     // Fetch logs
     /** @type {LogResponse} */
@@ -151,7 +176,6 @@ function updateClearButton(el) {
   let clearBtn = /** @type {HTMLButtonElement|null} */ (searchBar.querySelector('#clear-search-btn'));
 
   if (state.searchQuery) {
-    // Show clear button
     if (!clearBtn) {
       clearBtn = document.createElement('button');
       clearBtn.id = 'clear-search-btn';
@@ -160,10 +184,27 @@ function updateClearButton(el) {
       clearBtn.innerHTML = `${icon(Icons.X, 'icon')} ${t('admin.mailLogs.clear')}`;
       searchBar.appendChild(clearBtn);
     }
-  } else {
-    // Hide clear button
-    if (clearBtn) {
-      clearBtn.remove();
+  } else if (clearBtn) {
+    clearBtn.remove();
+  }
+
+  const filterActions = el.querySelector('.log-filter-actions');
+  const hasFilters = Boolean(state.searchQuery || state.fromDate || state.toDate);
+
+  if (filterActions) {
+    let clearFiltersBtn = /** @type {HTMLButtonElement|null} */ (filterActions.querySelector('#clear-date-filters-btn'));
+
+    if (hasFilters) {
+      if (!clearFiltersBtn) {
+        clearFiltersBtn = document.createElement('button');
+        clearFiltersBtn.id = 'clear-date-filters-btn';
+        clearFiltersBtn.className = 'btn btn-secondary';
+        clearFiltersBtn.type = 'button';
+        clearFiltersBtn.innerHTML = `${icon(Icons.X, 'icon')} ${t('admin.mailLogs.clearFilters')}`;
+        filterActions.appendChild(clearFiltersBtn);
+      }
+    } else if (clearFiltersBtn) {
+      clearFiltersBtn.remove();
     }
   }
 }
@@ -233,6 +274,37 @@ function renderFilters() {
       <button id="search-btn" class="btn btn-primary" type="button">
         ${icon(Icons.SEARCH, 'icon')} ${t('common.search')}
       </button>
+    </div>
+
+    <div class="log-filters">
+      <div class="form-group">
+        <label for="from-date" class="label">${t('admin.mailLogs.fromDate')}</label>
+        <input
+          type="datetime-local"
+          id="from-date"
+          class="input"
+          value="${state.fromDate}"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="to-date" class="label">${t('admin.mailLogs.toDate')}</label>
+        <input
+          type="datetime-local"
+          id="to-date"
+          class="input"
+          value="${state.toDate}"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="label label-invisible">${t('admin.mailLogs.applyFilters')}</label>
+        <div class="log-filter-actions">
+          <button id="apply-filters-btn" class="btn btn-primary" type="button">
+            ${t('admin.mailLogs.applyFilters')}
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="log-filters">
@@ -426,6 +498,9 @@ function renderLoading() {
  * @returns {string} HTML string
  */
 function renderError(message) {
+  /**
+   * Renders error state
+   */
   return `
     <div class="section">
       <div class="log-error">
@@ -443,36 +518,16 @@ function renderError(message) {
  * @returns {void}
  */
 function setupEventHandlers(el) {
-  // Use event delegation on the main container
-  el.addEventListener('click', handleClick);
-
-  // Search input - Enter key
-  const searchInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#log-search'));
-  if (searchInput) {
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        state.searchQuery = searchInput.value.trim();
-        state.currentPage = 1;
-        loadLogs(el);
-      }
-    });
+  // Remove existing delegated click handler if present
+  if (mailClickHandler) {
+    el.removeEventListener('click', mailClickHandler);
   }
 
-  // Page size selector
-  const pageSizeSelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#page-size'));
-  if (pageSizeSelect) {
-    pageSizeSelect.addEventListener('change', () => {
-      state.pageSize = parseInt(pageSizeSelect.value);
-      state.currentPage = 1;
-      loadLogs(el);
-    });
-  }
+  mailClickHandler = function handleClick(e) {
+    if (!location.hash.startsWith('#/logs/mail')) {
+      return;
+    }
 
-  /**
-   * Handles all click events via delegation
-   * @param {Event} e - Click event
-   */
-  function handleClick(e) {
     const target = /** @type {HTMLElement} */ (e.target);
 
     // Search button
@@ -489,6 +544,25 @@ function setupEventHandlers(el) {
     // Clear search button
     if (target.closest('#clear-search-btn')) {
       state.searchQuery = '';
+      state.currentPage = 1;
+      loadLogs(el);
+      return;
+    }
+
+    if (target.closest('#apply-filters-btn')) {
+      const fromDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#from-date'));
+      const toDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#to-date'));
+      if (fromDateInput) state.fromDate = fromDateInput.value;
+      if (toDateInput) state.toDate = toDateInput.value;
+      state.currentPage = 1;
+      loadLogs(el);
+      return;
+    }
+
+    if (target.closest('#clear-date-filters-btn')) {
+      state.searchQuery = '';
+      state.fromDate = '';
+      state.toDate = '';
       state.currentPage = 1;
       loadLogs(el);
       return;
@@ -520,6 +594,45 @@ function setupEventHandlers(el) {
       loadLogs(el);
       return;
     }
+  };
+
+  // Use event delegation on the main container
+  el.addEventListener('click', mailClickHandler);
+
+  // Search input - Enter key
+  const searchInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#log-search'));
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        state.searchQuery = searchInput.value.trim();
+        state.currentPage = 1;
+        loadLogs(el);
+      }
+    });
+  }
+
+  // Page size selector
+  const pageSizeSelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#page-size'));
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', () => {
+      state.pageSize = parseInt(pageSizeSelect.value);
+      state.currentPage = 1;
+      loadLogs(el);
+    });
+  }
+
+  const fromDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#from-date'));
+  if (fromDateInput) {
+    fromDateInput.addEventListener('change', () => {
+      state.fromDate = fromDateInput.value;
+    });
+  }
+
+  const toDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#to-date'));
+  if (toDateInput) {
+    toDateInput.addEventListener('change', () => {
+      state.toDate = toDateInput.value;
+    });
   }
 }
 
@@ -530,20 +643,13 @@ function setupEventHandlers(el) {
  */
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return t('admin.logs.justNow');
-  if (diffMins < 60) return t('admin.logs.minutesAgo', { minutes: diffMins });
-  if (diffMins < 1440) return t('admin.logs.hoursAgo', { hours: Math.floor(diffMins / 60) });
-
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
+    day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    second: '2-digit'
   });
 }
 

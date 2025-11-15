@@ -13,10 +13,11 @@ import { registerForgotPassword } from '/js/views/forgot-password.js';
 import { registerResetPassword } from '/js/views/reset-password.js';
 import { registerSetup2fa } from '/js/views/setup-2fa.js';
 import { registerVerify2fa } from '/js/views/verify-2fa.js';
-import { registerSystemLogs } from './views/system-logs.js';
-import { registerMailLogs } from './views/mail-logs.js';
-import { registerAuditLogs } from './views/audit-logs.js';
-import { registerRequestLogs } from './views/request-logs.js';
+import { registerMailLogs } from '/js/views/mail-logs.js';
+import { registerAuditLogs } from '/js/views/audit-logs.js';
+import { registerSystemLogs } from '/js/views/system-logs.js';
+import { registerRequestLogs } from '/js/views/request-logs.js';
+import { registerErrorLogs } from '/js/views/error-logs.js';
 import { icon, Icons } from '/js/icons.js';
 
 /**
@@ -124,10 +125,11 @@ registerForgotPassword(route);
 registerResetPassword(route);
 registerSetup2fa(route);
 registerVerify2fa(route);
-registerSystemLogs(route);
 registerMailLogs(route);
 registerAuditLogs(route);
+registerSystemLogs(route);
 registerRequestLogs(route);
+registerErrorLogs(route);
 
 // 404 handler
 route('/404', el => {

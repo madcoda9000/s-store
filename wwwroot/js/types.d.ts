@@ -475,3 +475,22 @@ interface Disable2FaDto {
   /** Current password for confirmation */
   password: string;
 }
+
+/**
+ * Toast notification type
+ */
+type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+/**
+ * Toast options
+ */
+interface ToastOptions {
+  /** Toast message */
+  message: string;
+  /** Toast type (default: 'info') */
+  type?: ToastType;
+  /** Duration in milliseconds (0 = no auto-dismiss, default: 4000) */
+  duration?: number;
+  /** Optional toast title */
+  title?: string;
+}

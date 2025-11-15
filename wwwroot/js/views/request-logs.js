@@ -486,6 +486,10 @@ function setupEventHandlers(el) {
    * @param {Event} e - Click event
    */
   function handleClick(e) {
+    if (!location.hash.startsWith('#/logs/request')) {
+      return;
+    }
+
     const target = /** @type {HTMLElement} */ (e.target);
 
     // Search button
@@ -543,20 +547,13 @@ function setupEventHandlers(el) {
  */
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return t('admin.logs.justNow');
-  if (diffMins < 60) return t('admin.logs.minutesAgo', { minutes: diffMins });
-  if (diffMins < 1440) return t('admin.logs.hoursAgo', { hours: Math.floor(diffMins / 60) });
-
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
+    day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    second: '2-digit'
   });
 }
 

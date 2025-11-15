@@ -15,12 +15,14 @@ const state = {
   sortBy: 'timestamp',
   sortOrder: 'desc',
   searchQuery: '',
-  categoryFilter: '', // '', 'AUDIT', or 'ERROR'
   fromDate: '',
   toDate: '',
   isInvestigator: false,
   decryptedLogs: new Map() // Map<logId, decryptedUser>
 };
+
+/** @type {(e: Event) => void | null} */
+let auditClickHandler = null;
 
 /**
  * Registers the audit logs route
@@ -36,9 +38,9 @@ export function registerAuditLogs(route) {
       state.sortBy = 'timestamp';
       state.sortOrder = 'desc';
       state.searchQuery = '';
-      state.categoryFilter = '';
       state.fromDate = '';
       state.toDate = '';
+
       state.decryptedLogs.clear();
 
       // Fetch current user
@@ -94,7 +96,7 @@ async function loadLogs(el) {
     // Show loading state
     const container = el.querySelector('#logs-container');
     if (container) {
-      container.innerHTML = '<div class="log-loading"><div class="spinner"></div><p>Loading logs...</p></div>';
+      container.innerHTML = `<div class="log-loading"><div class="spinner"></div><p>${t('admin.auditLogs.loadingLogs')}</p></div>`;
     }
 
     // Update filter inputs
@@ -105,10 +107,6 @@ async function loadLogs(el) {
       decrypt: 'false',
       limit: '1000' // Get all for client-side filtering
     });
-
-    if (state.categoryFilter) {
-      params.append('category', state.categoryFilter);
-    }
 
     if (state.fromDate) {
       params.append('fromDate', new Date(state.fromDate).toISOString());
@@ -178,11 +176,6 @@ function updateFilterInputs(el) {
     searchInput.value = state.searchQuery;
   }
 
-  const categorySelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#category-filter'));
-  if (categorySelect) {
-    categorySelect.value = state.categoryFilter;
-  }
-
   const fromDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#from-date'));
   if (fromDateInput) {
     fromDateInput.value = state.fromDate;
@@ -213,14 +206,14 @@ function updateClearButton(el) {
 
   let clearBtn = /** @type {HTMLButtonElement|null} */ (searchBar.querySelector('#clear-search-btn'));
 
-  if (state.searchQuery || state.categoryFilter || state.fromDate || state.toDate) {
+  if (state.searchQuery || state.fromDate || state.toDate) {
     // Show clear button
     if (!clearBtn) {
       clearBtn = document.createElement('button');
       clearBtn.id = 'clear-search-btn';
       clearBtn.className = 'btn btn-secondary';
       clearBtn.type = 'button';
-      clearBtn.innerHTML = `${icon(Icons.X, 'icon')} Clear Filters`;
+      clearBtn.innerHTML = `${icon(Icons.X, 'icon')} ${t('admin.auditLogs.clearFilters')}`;
       searchBar.appendChild(clearBtn);
     }
   } else {
@@ -267,39 +260,13 @@ function renderView(data, loading) {
   return `
     <div class="section">
       <div class="section-header">
-        <h2 class="section-title mb-0">${icon(Icons.SHIELD, 'icon')} Audit Logs</h2>
+        <h2 class="section-title mb-0">${icon(Icons.SHIELD, 'icon')} ${t('admin.auditLogs.title')}</h2>
       </div>
 
       ${renderFilters()}
 
       <div id="logs-container">
         ${loading ? renderLoading() : data ? renderLogsTable(data) : ''}
-      </div>
-    </div>
-  `;
-}
-
-/**
- * Renders pseudonym search card (AuditInvestigator only)
- * @returns {string} HTML string
- */
-function renderPseudonymSearch() {
-  return `
-    <div class="card pseudonym-search-card">
-      <h3>${icon(Icons.SEARCH, 'icon')} Search by Pseudonym</h3>
-      <p class="text-muted search-hint">
-        Search for all logs associated with a specific pseudonymized user identifier (e.g., "user_abc123")
-      </p>
-      <div class="pseudonym-search-flex">
-        <input
-          type="text"
-          id="pseudonym-search"
-          class="input"
-          placeholder="Enter pseudonym (e.g., user_abc123)"
-        />
-        <button id="pseudonym-search-btn" class="btn btn-primary" type="button">
-          ${icon(Icons.SEARCH, 'icon')} Search
-        </button>
       </div>
     </div>
   `;
@@ -316,26 +283,17 @@ function renderFilters() {
         type="text"
         id="log-search"
         class="input"
-        placeholder="Search by action, context, message, or user..."
+        placeholder="${t('admin.auditLogs.searchPlaceholder')}"
         value="${escapeHtml(state.searchQuery)}"
       />
       <button id="search-btn" class="btn btn-primary" type="button">
-        ${icon(Icons.SEARCH, 'icon')} Search
+        ${icon(Icons.SEARCH, 'icon')} ${t('admin.auditLogs.search')}
       </button>
     </div>
 
     <div class="log-filters">
       <div class="form-group">
-        <label for="category-filter" class="label">Category</label>
-        <select id="category-filter" class="select">
-          <option value="">All</option>
-          <option value="AUDIT" ${state.categoryFilter === 'AUDIT' ? 'selected' : ''}>Audit</option>
-          <option value="ERROR" ${state.categoryFilter === 'ERROR' ? 'selected' : ''}>Error</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="from-date" class="label">From Date</label>
+        <label for="from-date" class="label">${t('admin.auditLogs.fromDate')}</label>
         <input
           type="datetime-local"
           id="from-date"
@@ -345,7 +303,7 @@ function renderFilters() {
       </div>
 
       <div class="form-group">
-        <label for="to-date" class="label">To Date</label>
+        <label for="to-date" class="label">${t('admin.auditLogs.toDate')}</label>
         <input
           type="datetime-local"
           id="to-date"
@@ -357,21 +315,21 @@ function renderFilters() {
       <div class="form-group">
         <label class="label label-invisible">Apply</label>
         <button id="apply-filters-btn" class="btn btn-primary" type="button">
-          Apply Filters
+          ${t('admin.auditLogs.applyFilters')}
         </button>
       </div>
     </div>
 
     <div class="log-filters">
       <div class="page-size-selector">
-        <label for="page-size">Show:</label>
+        <label for="page-size">${t('admin.auditLogs.showPerPage')}</label>
         <select id="page-size">
           <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10</option>
           <option value="30" ${state.pageSize === 30 ? 'selected' : ''}>30</option>
           <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50</option>
           <option value="100" ${state.pageSize === 100 ? 'selected' : ''}>100</option>
         </select>
-        <span>per page</span>
+        <span>${t('admin.auditLogs.perPage')}</span>
       </div>
     </div>
   `;
@@ -387,33 +345,30 @@ function renderLogsTable(data) {
     return `
       <div class="log-empty-state">
         ${icon(Icons.SHIELD, 'icon')}
-        <p>No audit logs found</p>
+        <p>${t('admin.auditLogs.noLogsFound')}</p>
       </div>
     `;
   }
 
   return `
     <div class="log-table-container">
-      <table class="log-table">
+      <table class="log-table log-table--dense">
         <thead>
           <tr>
             <th class="sortable ${state.sortBy === 'timestamp' ? 'sort-' + state.sortOrder : ''}" data-sort="timestamp">
-              Timestamp
-            </th>
-            <th class="sortable ${state.sortBy === 'category' ? 'sort-' + state.sortOrder : ''}" data-sort="category">
-              Category
+              ${t('admin.auditLogs.timestamp')}
             </th>
             <th class="sortable ${state.sortBy === 'user' ? 'sort-' + state.sortOrder : ''}" data-sort="user">
-              User
+              ${t('admin.auditLogs.user')}
             </th>
             <th class="sortable ${state.sortBy === 'action' ? 'sort-' + state.sortOrder : ''}" data-sort="action">
-              Action
+              ${t('admin.auditLogs.action')}
             </th>
             <th class="sortable hide-mobile ${state.sortBy === 'context' ? 'sort-' + state.sortOrder : ''}" data-sort="context">
-              Context
+              ${t('admin.auditLogs.context')}
             </th>
-            <th>Message</th>
-            ${state.isInvestigator ? '<th>Actions</th>' : ''}
+            <th>${t('admin.auditLogs.message')}</th>
+            ${state.isInvestigator ? `<th>${t('admin.auditLogs.actions')}</th>` : ''}
           </tr>
         </thead>
         <tbody>
@@ -434,14 +389,10 @@ function renderLogsTable(data) {
 function renderLogRow(log) {
   // Check if this log has been decrypted
   const decryptedUser = state.decryptedLogs.get(log.id);
-  
-  // Category badge color
-  const categoryClass = log.category === 'ERROR' ? 'badge-danger' : 'badge-primary';
 
   return `
     <tr>
       <td class="log-cell-timestamp">${formatTimestamp(log.timestamp)}</td>
-      <td><span class="badge ${categoryClass}">${escapeHtml(log.category)}</span></td>
       <td class="log-cell-user">
         ${decryptedUser 
           ? `<span class="user-decrypted">${escapeHtml(decryptedUser)}</span><br><span class="user-pseudonym-small text-muted">${escapeHtml(log.user)}</span>`
@@ -455,9 +406,9 @@ function renderLogRow(log) {
         ? `<td>
             ${log.hasEncryptedInfo 
               ? `<button class="btn btn-sm btn-warning decrypt-btn" data-log-id="${log.id}" data-log-action="${escapeHtml(log.action)}" data-log-timestamp="${escapeHtml(log.timestamp)}" data-log-user="${escapeHtml(log.user)}">
-                  ${icon(Icons.UNLOCK, 'icon')} Decrypt
+                  ${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decrypt')}
                 </button>`
-              : `<span class="text-muted no-encrypted-data">No encrypted data</span>`
+              : `<span class="text-muted no-encrypted-data">${t('admin.auditLogs.noEncryptedData')}</span>`
             }
           </td>`
         : ''
@@ -512,7 +463,7 @@ function renderPagination(pagination) {
   return `
     <div class="pagination">
       <div class="pagination-info">
-        Showing ${startItem} to ${endItem} of ${total} logs
+        ${t('admin.auditLogs.showing', { start: startItem, end: endItem, total: total })}
       </div>
 
       <div class="pagination-controls">
@@ -559,7 +510,7 @@ function renderLoading() {
   return `
     <div class="log-loading">
       <div class="spinner"></div>
-      <p>Loading audit logs...</p>
+      <p>${t('admin.auditLogs.loadingLogs')}</p>
     </div>
   `;
 }
@@ -596,28 +547,27 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
     <div class="modal-overlay"></div>
     <div class="modal-content modal-content-wide">
       <div class="modal-header">
-        <h3>${icon(Icons.UNLOCK, 'icon')} Decrypt User Information</h3>
+        <h3>${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decryptModal.title')}</h3>
         <button class="modal-close" aria-label="Close">
           ${icon(Icons.X, 'icon')}
         </button>
       </div>
       <div class="modal-body">
         <div class="alert alert-warning">
-          <strong>Warning:</strong> Decrypting user information is a privileged operation that will be logged.
-          Please provide a valid justification for accessing this data.
+          <strong>Warning:</strong> ${t('admin.auditLogs.decryptModal.warning')}
         </div>
 
         <div class="decrypt-log-details">
-          <p><strong>Log ID:</strong> ${logId}</p>
-          <p><strong>Action:</strong> ${escapeHtml(action)}</p>
-          <p><strong>Timestamp:</strong> ${formatTimestamp(timestamp)}</p>
-          <p><strong>Pseudonym:</strong> <code>${escapeHtml(pseudonym)}</code></p>
+          <p><strong>${t('admin.auditLogs.decryptModal.logId')}</strong> ${logId}</p>
+          <p><strong>${t('admin.auditLogs.decryptModal.action')}</strong> ${escapeHtml(action)}</p>
+          <p><strong>${t('admin.auditLogs.decryptModal.timestamp')}</strong> ${formatTimestamp(timestamp)}</p>
+          <p><strong>${t('admin.auditLogs.decryptModal.pseudonym')}</strong> <code>${escapeHtml(pseudonym)}</code></p>
         </div>
 
         <form id="decrypt-form">
           <div class="form-group">
             <label for="justification" class="label">
-              Justification <span class="decrypt-required-star">*</span>
+              ${t('admin.auditLogs.decryptModal.justificationLabel')} <span class="decrypt-required-star">${t('admin.auditLogs.decryptModal.justificationRequired')}</span>
             </label>
             <textarea
               id="justification"
@@ -625,17 +575,17 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
               required
               minlength="10"
               maxlength="500"
-              placeholder="Enter a detailed justification for decrypting this log entry (minimum 10 characters)..."
+              placeholder="${t('admin.auditLogs.decryptModal.justificationPlaceholder')}"
             ></textarea>
-            <p class="form-hint">Minimum 10 characters, maximum 500 characters</p>
+            <p class="form-hint">${t('admin.auditLogs.decryptModal.justificationHint')}</p>
           </div>
 
           <div class="button-group">
             <button type="submit" class="btn btn-warning">
-              ${icon(Icons.UNLOCK, 'icon')} Decrypt User Information
+              ${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton')}
             </button>
             <button type="button" class="btn btn-secondary modal-cancel">
-              Cancel
+              ${t('admin.auditLogs.decryptModal.cancel')}
             </button>
           </div>
 
@@ -677,7 +627,7 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
 
     if (!justification || justification.length < 10) {
       if (resultDiv) {
-        resultDiv.innerHTML = '<div class="alert alert-danger">Justification must be at least 10 characters long.</div>';
+        resultDiv.innerHTML = `<div class="alert alert-danger">${t('admin.auditLogs.decryptModal.justificationTooShort')}</div>`;
       }
       return;
     }
@@ -686,7 +636,7 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
     const submitBtn = /** @type {HTMLButtonElement|null} */ (form.querySelector('button[type="submit"]'));
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.innerHTML = `<div class="spinner spinner-sm"></div> Decrypting...`;
+      submitBtn.innerHTML = `<div class="spinner spinner-sm"></div> ${t('admin.auditLogs.decryptModal.decrypting')}`;
     }
 
     try {
@@ -707,22 +657,22 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
       if (modalBody) {
         modalBody.innerHTML = `
           <div class="alert alert-success">
-            <strong>Decryption Successful</strong>
+            <strong>${t('admin.auditLogs.decryptModal.success')}</strong>
           </div>
           
           <div class="decrypt-user-display">
-            <p><strong>Decrypted User:</strong></p>
+            <p><strong>${t('admin.auditLogs.decryptModal.decryptedUser')}</strong></p>
             <p class="decrypt-user-name">${escapeHtml(result.decryptedUser)}</p>
           </div>
 
           <div class="decrypt-meta-info">
-            <p><strong>Decrypted by:</strong> ${escapeHtml(result.decryptedBy)}</p>
-            <p><strong>Decrypted at:</strong> ${new Date(result.decryptedAt).toLocaleString()}</p>
-            <p><strong>Justification:</strong> ${escapeHtml(result.justification)}</p>
+            <p><strong>${t('admin.auditLogs.decryptModal.decryptedBy')}</strong> ${escapeHtml(result.decryptedBy)}</p>
+            <p><strong>${t('admin.auditLogs.decryptModal.decryptedAt')}</strong> ${new Date(result.decryptedAt).toLocaleString()}</p>
+            <p><strong>${t('admin.auditLogs.decryptModal.justificationUsed')}</strong> ${escapeHtml(result.justification)}</p>
           </div>
 
           <button type="button" class="btn btn-primary modal-close-success">
-            Close
+            ${t('admin.auditLogs.decryptModal.close')}
           </button>
         `;
 
@@ -740,13 +690,13 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
     } catch (err) {
       const error = /** @type {Error} */ (err);
       if (resultDiv) {
-        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Decryption Failed:</strong> ${escapeHtml(error.message)}</div>`;
+        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>${t('admin.auditLogs.decryptModal.failed')}</strong> ${escapeHtml(error.message)}</div>`;
       }
 
       // Re-enable form
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `${icon(Icons.UNLOCK, 'icon')} Decrypt User Information`;
+        submitBtn.innerHTML = `${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton')}`;
       }
     }
   });
@@ -763,7 +713,7 @@ async function searchByPseudonym(pseudonym, el) {
     // Show loading state
     const container = el.querySelector('#logs-container');
     if (container) {
-      container.innerHTML = '<div class="log-loading"><div class="spinner"></div><p>Searching by pseudonym...</p></div>';
+      container.innerHTML = `<div class="log-loading"><div class="spinner"></div><p>${t('admin.auditLogs.loadingLogs')}</p></div>`;
     }
 
     // Fetch logs by pseudonym
@@ -816,46 +766,15 @@ async function searchByPseudonym(pseudonym, el) {
  * @returns {void}
  */
 function setupEventHandlers(el) {
-  // Use event delegation on the main container
-  el.addEventListener('click', handleClick);
-
-  // Search input - Enter key
-  const searchInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#log-search'));
-  if (searchInput) {
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        state.searchQuery = searchInput.value.trim();
-        state.currentPage = 1;
-        loadLogs(el);
-      }
-    });
+  if (auditClickHandler) {
+    el.removeEventListener('click', auditClickHandler);
   }
 
-  // Page size selector
-  const pageSizeSelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#page-size'));
-  if (pageSizeSelect) {
-    pageSizeSelect.addEventListener('change', () => {
-      state.pageSize = parseInt(pageSizeSelect.value);
-      state.currentPage = 1;
-      loadLogs(el);
-    });
-  }
+  auditClickHandler = function handleClick(e) {
+    if (!location.hash.startsWith('#/logs/audit')) {
+      return;
+    }
 
-  // Category filter
-  const categorySelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#category-filter'));
-  if (categorySelect) {
-    categorySelect.addEventListener('change', () => {
-      state.categoryFilter = categorySelect.value;
-      state.currentPage = 1;
-      loadLogs(el);
-    });
-  }
-
-  /**
-   * Handles all click events via delegation
-   * @param {Event} e - Click event
-   */
-  function handleClick(e) {
     const target = /** @type {HTMLElement} */ (e.target);
 
     // Search button
@@ -873,10 +792,8 @@ function setupEventHandlers(el) {
     if (target.closest('#apply-filters-btn')) {
       const fromDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#from-date'));
       const toDateInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#to-date'));
-      
       if (fromDateInput) state.fromDate = fromDateInput.value;
       if (toDateInput) state.toDate = toDateInput.value;
-      
       state.currentPage = 1;
       loadLogs(el);
       return;
@@ -893,21 +810,18 @@ function setupEventHandlers(el) {
       return;
     }
 
-    // Decrypt button
     const decryptBtn = target.closest('.decrypt-btn');
     if (decryptBtn) {
       const logId = parseInt(decryptBtn.getAttribute('data-log-id') || '0');
       const action = decryptBtn.getAttribute('data-log-action') || '';
       const timestamp = decryptBtn.getAttribute('data-log-timestamp') || '';
       const user = decryptBtn.getAttribute('data-log-user') || '';
-      
       if (logId) {
         openDecryptModal(logId, action, timestamp, user);
       }
       return;
     }
 
-    // Pagination buttons
     const paginationBtn = target.closest('.pagination-btn[data-page]');
     if (paginationBtn && !paginationBtn.hasAttribute('disabled')) {
       const page = parseInt(paginationBtn.getAttribute('data-page') || '1');
@@ -916,23 +830,31 @@ function setupEventHandlers(el) {
       return;
     }
 
-    // Sortable column headers
     const sortableHeader = target.closest('.sortable[data-sort]');
     if (sortableHeader) {
       const sortBy = sortableHeader.getAttribute('data-sort') || 'timestamp';
-
       if (state.sortBy === sortBy) {
-        // Toggle sort order
         state.sortOrder = state.sortOrder === 'asc' ? 'desc' : 'asc';
       } else {
-        // New sort column
         state.sortBy = sortBy;
         state.sortOrder = 'desc';
       }
-
       loadLogs(el);
       return;
     }
+  };
+
+  // Use event delegation on the main container
+  el.addEventListener('click', auditClickHandler);
+
+  // Setup page size change listener
+  const pageSizeSelect = /** @type {HTMLSelectElement|null} */ (el.querySelector('#page-size'));
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', () => {
+      state.pageSize = parseInt(pageSizeSelect.value);
+      state.currentPage = 1;
+      loadLogs(el);
+    });
   }
 }
 
@@ -943,20 +865,13 @@ function setupEventHandlers(el) {
  */
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
-
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(undefined, {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
+    day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    second: '2-digit'
   });
 }
 

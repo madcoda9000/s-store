@@ -55,6 +55,7 @@ export const Icons = {
   ALERT_TRIANGLE: 'alert-triangle',
   INFO: 'info',
   CHECK_CIRCLE: 'check-circle',
+  ERROR_BUG: 'error-bug',
   
   // File operations
   DOWNLOAD: 'download',

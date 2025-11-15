@@ -388,8 +388,8 @@ async function updateNavigation(isAdmin) {
           Administration ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
         </button>
         <div class="nav-dropdown-menu">
-          <a href="#/admin/users" class="nav-dropdown-item">${icon(Icons.USERS, 'icon')} Users</a>
-          <a href="#/admin/roles" class="nav-dropdown-item">${icon(Icons.SHIELD, 'icon')} Roles</a>
+          <a href="#/admin/users" class="nav-dropdown-item">${icon(Icons.USER, 'icon')} Users</a>
+          <a href="#/admin/roles" class="nav-dropdown-item">${icon(Icons.USERS, 'icon')} Roles</a>
         </div>
       </div>
     `);
@@ -398,6 +398,7 @@ async function updateNavigation(isAdmin) {
     const logItems = [
       `<a href="#/logs/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>`,
       `<a href="#/logs/system" class="nav-dropdown-item">${icon(Icons.SETTINGS, 'icon')} System Logs</a>`,
+      `<a href="#/logs/error" class="nav-dropdown-item">${icon(Icons.ERROR_BUG, 'icon')} Error Logs</a>`,
       `<a href="#/logs/mail" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Mail Logs</a>`
     ];
 

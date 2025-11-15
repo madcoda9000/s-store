@@ -4,6 +4,7 @@ import { api, setCsrfToken } from '../api.js';
 import { updateHeader } from '../header.js';
 import { hasRole, renderAccessDenied } from '../auth-utils.js';
 import { t } from '../i18n.js';
+import { showToast } from '../toast.js';
 
 /**
  * User action types
@@ -48,7 +49,7 @@ export function registerAdminUsers(route) {
           </div>
           
           <div class="table-container">
-              <table class="table">
+              <table class="table" id="users-table">
                 <thead>
                   <tr>
                     <th>Username</th>
@@ -64,9 +65,29 @@ export function registerAdminUsers(route) {
                 </tbody>
               </table>
             </div>
-          
-          <div id="message" class="alert alert-success hidden"></div>
         </div>`;
+      
+      /**
+       * Refreshes the users list without full page reload
+       * @returns {Promise<void>}
+       */
+      async function refreshUsersList() {
+        try {
+          /** @type {AdminUser[]} */
+          const updatedList = await api('/admin/users');
+          const tbody = el.querySelector('#users-table tbody');
+          if (tbody) {
+            tbody.innerHTML = updatedList.map(u => renderUserRow(u)).join('');
+          }
+        } catch (err) {
+          const error = /** @type {Error} */ (err);
+          showToast({
+            type: 'error',
+            title: 'Refresh Failed',
+            message: error.message || 'Failed to refresh users list'
+          });
+        }
+      }
       
       // Handle button clicks and toggle changes
       el.addEventListener('click', async (ev) => {
@@ -77,9 +98,8 @@ export function registerAdminUsers(route) {
         const action = /** @type {UserAction} */ (btn.getAttribute('data-action'));
         const apiMethod = /** @type {HttpMethod} */ (btn.getAttribute('data-method'));
         const userId = btn.getAttribute('data-id');
-        const messageEl = /** @type {HTMLElement} */ (el.querySelector('#message'));
         
-        if (!userId || !messageEl) return;
+        if (!userId) return;
         
         /** @type {Record<UserAction, string>} */
         const actionMap = {
@@ -93,24 +113,26 @@ export function registerAdminUsers(route) {
         try {
           const res = await api(actionMap[action], { method: apiMethod });
           
-          messageEl.textContent = 'Action completed successfully!';
-          messageEl.className = 'alert alert-success';
-          messageEl.classList.remove('hidden');
+          showToast({
+            type: 'success',
+            title: 'Success',
+            message: 'Action completed successfully!'
+          });
 
           // Update CSRF token if returned from backend
           if (res?.csrfToken) {
             setCsrfToken(res.csrfToken);
           }
           
-          // Reload view
-          setTimeout(() => {
-            location.reload();
-          }, 1000);
+          // Refresh the users list
+          await refreshUsersList();
         } catch (err) {
           const error = /** @type {Error} */ (err);
-          messageEl.textContent = error.message || 'An error occurred';
-          messageEl.className = 'alert alert-danger';
-          messageEl.classList.remove('hidden');
+          showToast({
+            type: 'error',
+            title: 'Action Failed',
+            message: error.message || 'An error occurred'
+          });
         }
       });
       
@@ -121,9 +143,8 @@ export function registerAdminUsers(route) {
         
         const action = target.getAttribute('data-action');
         const userId = target.getAttribute('data-id');
-        const messageEl = /** @type {HTMLElement} */ (el.querySelector('#message'));
         
-        if (!userId || !messageEl || !action) return;
+        if (!userId || !action) return;
         
         // Determine the API endpoint based on toggle state
         let endpoint = '';
@@ -153,24 +174,26 @@ export function registerAdminUsers(route) {
         try {
           const res = await api(endpoint, { method });
           
-          messageEl.textContent = 'Action completed successfully!';
-          messageEl.className = 'alert alert-success';
-          messageEl.classList.remove('hidden');
+          showToast({
+            type: 'success',
+            title: 'Success',
+            message: 'User status updated successfully!'
+          });
 
           // Update CSRF token if returned from backend
           if (res?.csrfToken) {
             setCsrfToken(res.csrfToken);
           }
           
-          // Reload view to reflect changes
-          setTimeout(() => {
-            location.reload();
-          }, 1000);
+          // Refresh the users list
+          await refreshUsersList();
         } catch (err) {
           const error = /** @type {Error} */ (err);
-          messageEl.textContent = error.message || 'An error occurred';
-          messageEl.className = 'alert alert-danger';
-          messageEl.classList.remove('hidden');
+          showToast({
+            type: 'error',
+            title: 'Update Failed',
+            message: error.message || 'An error occurred'
+          });
           
           // Revert toggle state on error
           target.checked = !target.checked;

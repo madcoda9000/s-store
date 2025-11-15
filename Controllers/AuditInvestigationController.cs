@@ -67,12 +67,7 @@ namespace sstore.Controllers
 
             // Build query
             var query = _db.Logs
-                .Where(l => l.Category == LogCategory.AUDIT|| l.Category == LogCategory.ERROR);
-
-            if (category.HasValue)
-            {
-                query = query.Where(l => l.Category == category.Value);
-            }
+                .Where(l => l.Category == LogCategory.AUDIT);
 
             if (fromDate.HasValue)
             {
