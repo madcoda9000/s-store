@@ -14,7 +14,6 @@ namespace sstore.Middleware
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestLoggingMiddleware> _logger;
         private readonly RequestLoggingOptions _options;
-        private readonly ISecureLogService _logService;
         private readonly HashSet<string> _excludedPaths;
 
         /// <summary>

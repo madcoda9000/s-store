@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -13,9 +14,10 @@ namespace sstore.Controllers
         private readonly IAntiforgery _antiforgery;
 
         /// <summary>
-        /// Constructor for the CsrfController
+        /// Constructor for the CsrfController.
         /// </summary>
-        /// <param name="antiforgery">Antiforgery service for generating CSRF tokens</param>
+        /// <param name="antiforgery">Antiforgery service for generating CSRF tokens.</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public CsrfController(IAntiforgery antiforgery)
         {
             _antiforgery = antiforgery;

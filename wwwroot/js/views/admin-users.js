@@ -9,7 +9,7 @@ import { showToast } from '../toast.js';
 
 /**
  * User action types
- * @typedef {'enable'|'disable'|'enforce2fa'|'unenforce2fa'|'delete'} UserAction
+ * @typedef {'enable'|'disable'|'enforce2fa'|'unenforce2fa'|'delete'|'edit'} UserAction
  */
 
 /**
@@ -558,6 +558,12 @@ function setupEventHandlers(el) {
 
     const target = /** @type {HTMLElement} */ (e.target);
 
+    // Add user button
+    if (target.closest('#add-user-btn')) {
+      await openUserModal(el, null);
+      return;
+    }
+
     // Search button
     if (target.closest('#search-btn')) {
       const searchInput = /** @type {HTMLInputElement|null} */ (el.querySelector('#user-search'));
@@ -610,6 +616,12 @@ function setupEventHandlers(el) {
     
     if (!userId) return;
 
+    // Show edit modal for edit action
+    if (action === 'edit') {
+      await openUserModal(el, userId);
+      return;
+    }
+
     // Show confirmation modal for delete action
     if (action === 'delete') {
       const userName = btn.closest('tr')?.querySelector('td strong')?.textContent || 'this user';
@@ -623,7 +635,8 @@ function setupEventHandlers(el) {
       disable: `/admin/users/${userId}/disable`,
       enforce2fa: `/admin/users/${userId}/enforce-2fa`,
       unenforce2fa: `/admin/users/${userId}/unenforce-2fa`,
-      delete: `/admin/users/${userId}/delete`
+      delete: `/admin/users/${userId}/delete`,
+      edit: `/admin/users/${userId}` // Not used in API call, handled separately
     };
     
     try {
@@ -796,5 +809,361 @@ function escapeHtml(str) {
       "'": '&#39;'
     };
     return map[char];
+  });
+}
+
+/**
+ * Opens the create/edit user modal
+ * @param {HTMLElement} el - Container element
+ * @param {string|null} userId - User ID for editing, null for creating
+ * @returns {Promise<void>}
+ */
+async function openUserModal(el, userId = null) {
+  const isEdit = userId !== null;
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.id = 'user-modal';
+
+  // Show loading state initially
+  modal.innerHTML = `
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>${icon(Icons.USER, 'icon')} ${isEdit ? t('admin.users.createModal.editTitle') : t('admin.users.createModal.title')}</h3>
+        <button class="modal-close" aria-label="Close">
+          ${icon(Icons.X, 'icon')}
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="log-loading">
+          <div class="spinner"></div>
+          <p>${isEdit ? t('admin.users.createModal.loadingUser') : t('admin.users.createModal.loadingRoles')}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Setup close handlers immediately
+  const closeModal = () => {
+    modal.remove();
+  };
+
+  const closeBtn = modal.querySelector('.modal-close');
+  const overlay = modal.querySelector('.modal-overlay');
+
+  closeBtn?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeModal();
+    }
+  });
+
+  try {
+    // Fetch available roles
+    const roles = await api('/admin/roles');
+    
+    // Fetch user data if editing
+    let userData = null;
+    if (isEdit) {
+      userData = await api(`/admin/users/details/${userId}`);
+    }
+
+    // Render the form
+    const modalBody = modal.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = renderUserForm(roles, userData, isEdit);
+    }
+
+    // Setup form event handlers
+    setupModalHandlers(modal, el, isEdit, userId, closeModal);
+
+  } catch (err) {
+    const error = /** @type {Error} */ (err);
+    const modalBody = modal.querySelector('.modal-body');
+    if (modalBody) {
+      modalBody.innerHTML = `
+        <div class="alert alert-danger">
+          <strong>${t('common.error')}:</strong> ${escapeHtml(error.message)}
+        </div>
+      `;
+    }
+  }
+}
+
+/**
+ * Renders the user creation/edit form
+ * @param {Array} roles - Available roles
+ * @param {Object|null} userData - User data for editing
+ * @param {boolean} isEdit - Whether this is an edit operation
+ * @returns {string} HTML string
+ */
+function renderUserForm(roles, userData, isEdit) {
+  const userRoles = userData?.Roles || userData?.roles || [];
+  
+  return `
+    <form class="form" id="user-form">
+      <div class="form-group">
+        <label class="label" for="user-username">${t('admin.users.createModal.username')}</label>
+        <input
+          type="text"
+          id="user-username"
+          class="input"
+          placeholder="${t('admin.users.createModal.usernamePlaceholder')}"
+          value="${userData ? escapeHtml(userData.UserName || userData.userName || '') : ''}"
+          required
+          minlength="3"
+          maxlength="50"
+          pattern="[a-zA-Z0-9._-]+"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="user-email">${t('admin.users.createModal.email')}</label>
+        <input
+          type="email"
+          id="user-email"
+          class="input"
+          placeholder="${t('admin.users.createModal.emailPlaceholder')}"
+          value="${userData ? escapeHtml(userData.Email || userData.email || '') : ''}"
+          required
+          maxlength="256"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="user-password">${isEdit ? t('admin.users.createModal.newPassword') : t('admin.users.createModal.password')}</label>
+        <input
+          type="password"
+          id="user-password"
+          class="input"
+          placeholder="${isEdit ? t('admin.users.createModal.newPasswordPlaceholder') : t('admin.users.createModal.passwordPlaceholder')}"
+          ${!isEdit ? 'required' : ''}
+          minlength="12"
+          maxlength="128"
+        />
+        ${isEdit ? `<span class="form-hint">${t('admin.users.createModal.newPasswordHint')}</span>` : ''}
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="user-firstname">${t('admin.users.createModal.firstName')} <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          id="user-firstname"
+          class="input"
+          placeholder="${t('admin.users.createModal.firstNamePlaceholder')}"
+          value="${userData ? escapeHtml(userData.FirstName || userData.firstName || '') : ''}"
+          required
+          maxlength="100"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="label" for="user-lastname">${t('admin.users.createModal.lastName')} <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          id="user-lastname"
+          class="input"
+          placeholder="${t('admin.users.createModal.lastNamePlaceholder')}"
+          value="${userData ? escapeHtml(userData.LastName || userData.lastName || '') : ''}"
+          required
+          maxlength="100"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="label">${t('admin.users.createModal.roles')} <span class="text-danger">*</span></label>
+        <div class="roles-checkboxes">
+          ${roles.map(role => {
+            const roleName = role.Name || role.name || '';
+            const isChecked = userRoles.includes(roleName);
+            return `
+              <label class="checkbox">
+                <input
+                  type="checkbox"
+                  name="user-roles"
+                  value="${escapeHtml(roleName)}"
+                  ${isChecked ? 'checked' : ''}
+                />
+                <span>${escapeHtml(roleName)}</span>
+              </label>
+            `;
+          }).join('')}
+        </div>
+        <span class="form-hint">${t('admin.users.createModal.rolesRequired')}</span>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            id="user-2fa-enforced"
+            ${userData?.TwoFactorEnforced === 1 ? 'checked' : ''}
+          />
+          <span>${t('admin.users.createModal.twoFactorEnforced')}</span>
+        </label>
+        <span class="form-hint">${t('admin.users.createModal.twoFactorEnforcedHint')}</span>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox">
+          <input
+            type="checkbox"
+            id="user-ldap-enabled"
+            ${userData?.LdapLoginEnabled === 1 ? 'checked' : ''}
+          />
+          <span>${t('admin.users.createModal.ldapEnabled')}</span>
+        </label>
+        <span class="form-hint">${t('admin.users.createModal.ldapEnabledHint')}</span>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn btn-primary" id="submit-user-btn">
+          ${icon(Icons.CHECK, 'icon')} ${isEdit ? t('admin.users.createModal.updateButton') : t('admin.users.createModal.createButton')}
+        </button>
+        <button type="button" class="btn btn-secondary modal-cancel">
+          ${t('admin.users.createModal.cancel')}
+        </button>
+      </div>
+    </form>
+  `;
+}
+
+/**
+ * Sets up event handlers for the user modal
+ * @param {HTMLElement} modal - Modal element
+ * @param {HTMLElement} el - Container element
+ * @param {boolean} isEdit - Whether this is an edit operation
+ * @param {string|null} userId - User ID for editing
+ * @param {() => void} closeModal - Function to close the modal
+ * @returns {void}
+ */
+function setupModalHandlers(modal, el, isEdit, userId, closeModal) {
+  const cancelBtn = modal.querySelector('.modal-cancel');
+  const form = /** @type {HTMLFormElement|null} */ (modal.querySelector('#user-form'));
+  const submitBtn = /** @type {HTMLButtonElement|null} */ (modal.querySelector('#submit-user-btn'));
+
+  cancelBtn?.addEventListener('click', () => closeModal());
+
+  // Handle form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    if (!submitBtn || !form) return;
+
+    // Get form values
+    const username = /** @type {HTMLInputElement} */ (form.querySelector('#user-username'))?.value.trim();
+    const email = /** @type {HTMLInputElement} */ (form.querySelector('#user-email'))?.value.trim();
+    const password = /** @type {HTMLInputElement} */ (form.querySelector('#user-password'))?.value;
+    const firstName = /** @type {HTMLInputElement} */ (form.querySelector('#user-firstname'))?.value.trim();
+    const lastName = /** @type {HTMLInputElement} */ (form.querySelector('#user-lastname'))?.value.trim();
+    const twoFactorEnforced = /** @type {HTMLInputElement} */ (form.querySelector('#user-2fa-enforced'))?.checked || false;
+    const ldapEnabled = /** @type {HTMLInputElement} */ (form.querySelector('#user-ldap-enabled'))?.checked || false;
+
+    // Get selected roles
+    const roleCheckboxes = /** @type {NodeListOf<HTMLInputElement>} */ (form.querySelectorAll('input[name="user-roles"]:checked'));
+    const selectedRoles = Array.from(roleCheckboxes).map(cb => cb.value);
+
+    // Validate required fields
+    if (!firstName || firstName.length === 0) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('admin.users.createModal.firstName') + ' is required'
+      });
+      return;
+    }
+
+    if (!lastName || lastName.length === 0) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('admin.users.createModal.lastName') + ' is required'
+      });
+      return;
+    }
+
+    // Validate at least one role is selected
+    if (selectedRoles.length === 0) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('admin.users.createModal.rolesRequired')
+      });
+      return;
+    }
+
+    // Validate password for create mode
+    if (!isEdit && (!password || password.length < 12)) {
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: t('admin.users.createModal.passwordPlaceholder')
+      });
+      return;
+    }
+
+    // Disable button during submission
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<div class="spinner spinner-sm"></div> ${isEdit ? t('admin.users.createModal.updating') : t('admin.users.createModal.creating')}`;
+
+    try {
+      const endpoint = isEdit ? `/admin/users/${userId}/update-extended` : '/admin/users/create-extended';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const payload = {
+        Username: username,
+        Email: email,
+        FirstName: firstName,
+        LastName: lastName,
+        TwoFactorEnforced: twoFactorEnforced,
+        LdapLoginEnabled: ldapEnabled,
+        Roles: selectedRoles
+      };
+
+      // Add password for create, or newPassword for edit if provided
+      if (isEdit) {
+        if (password && password.length >= 12) {
+          payload.NewPassword = password;
+        }
+      } else {
+        payload.Password = password;
+      }
+
+      const res = await api(endpoint, { 
+        method,
+        body: payload
+      });
+
+      showToast({
+        type: 'success',
+        title: t('common.success'),
+        message: isEdit ? t('admin.users.createModal.updateSuccess') : t('admin.users.createModal.success')
+      });
+
+      // Update CSRF token if returned
+      if (res?.csrfToken) {
+        setCsrfToken(res.csrfToken);
+      }
+
+      // Close modal
+      closeModal();
+
+      // Refresh users list
+      await loadUsers(el);
+
+    } catch (err) {
+      const error = /** @type {Error} */ (err);
+      showToast({
+        type: 'error',
+        title: t('common.error'),
+        message: error.message || (isEdit ? t('admin.users.createModal.updateFailed') : t('admin.users.createModal.failed'))
+      });
+
+      // Re-enable button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `${icon(Icons.CHECK, 'icon')} ${isEdit ? t('admin.users.createModal.updateButton') : t('admin.users.createModal.createButton')}`;
+    }
   });
 }
