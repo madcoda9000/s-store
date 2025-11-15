@@ -268,7 +268,26 @@
   "admin": {
     "users": {
       "title": "User Management",
-      "search": "Search users...",      
+      "addUser": "Add User",
+      "search": "Search",
+      "searchPlaceholder": "Search by username or email...",
+      "clearFilters": "Clear",
+      "showPerPage": "Show",
+      "perPage": "per page",
+      "showing": "Showing {{start}} to {{end}} of {{total}} users",
+      "noUsersFound": "No users found",
+      "loadingUsers": "Loading users...",
+      "username": "Username",
+      "email": "Email",
+      "twoFactor": "2FA",
+      "accountStatus": "Account Status",
+      "twoFactorEnforced": "2FA Enforced",
+      "enforce2FA": "Enforce 2FA",
+      "actions": "Actions",
+      "actionSuccess": "Action completed successfully!",
+      "actionFailed": "An error occurred",
+      "statusUpdated": "User status updated successfully!",
+      "updateFailed": "An error occurred",
       "enabled": "Enabled",
       "disabled": "Disabled",
       "locked": "Locked",
@@ -283,6 +302,16 @@
         "twoFactor": "2FA",
         "lockout": "Lockout",
         "actions": "Actions"
+      },
+      "deleteModal": {
+        "title": "Delete User",
+        "warning": "This action cannot be undone!",
+        "message": "Are you sure you want to delete the user",
+        "confirm": "Yes, Delete User",
+        "cancel": "Cancel",
+        "deleting": "Deleting...",
+        "success": "User deleted successfully!",
+        "failed": "Failed to delete user"
       }
     },
     "auditLogs": {

@@ -10,7 +10,7 @@ trigger: always_on
 - when you want to modify or delete existing code,  Always ask for permission before doing so.
 - when you want to modify, move or delete a file.  Always ask for permission before doing so.
 - When you want to create a new file. Ask for permission before doing so.
-- use existing translation features of the project. Always avoid using clear text
+- always use existing translation features of the project. See t() from i18n.js. Always avoid using clear text
 - use the project existing css and us rules. If not sure take a look at existing views
 - javascript generated views must be csp conform
 - When creating JavaScript files, make sure they are typed. If types are missing, add them to /wwwroot/js/types.d.js

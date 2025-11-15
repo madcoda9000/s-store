@@ -34,6 +34,7 @@ export const Icons = {
   SHIELD_CHECK: 'shield-check',
   LOG_OUT: 'log-out',
   LOCK: 'lock',
+  KEY_ROUND: 'key-round',
   
   // Navigation
   HOME: 'home',
@@ -55,7 +56,10 @@ export const Icons = {
   ALERT_TRIANGLE: 'alert-triangle',
   INFO: 'info',
   CHECK_CIRCLE: 'check-circle',
+  CHECK_CIRCLE_FILLED: 'check-circle-filled',
   ERROR_BUG: 'error-bug',
+  CIRCLE_X: 'circle-x',
+  CIRCLE_X_FILLED: 'circle-x-filled',
   
   // File operations
   DOWNLOAD: 'download',

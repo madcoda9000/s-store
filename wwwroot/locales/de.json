@@ -268,7 +268,26 @@
   "admin": {
     "users": {
       "title": "Benutzerverwaltung",
-      "search": "Benutzer suchen...",      
+      "addUser": "Benutzer hinzufügen",
+      "search": "Suchen",
+      "searchPlaceholder": "Suche nach Benutzername oder E-Mail...",
+      "clearFilters": "Löschen",
+      "showPerPage": "Anzeigen",
+      "perPage": "pro Seite",
+      "showing": "Zeige {{start}} bis {{end}} von {{total}} Benutzern",
+      "noUsersFound": "Keine Benutzer gefunden",
+      "loadingUsers": "Lade Benutzer...",
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "twoFactor": "2FA",
+      "accountStatus": "Kontostatus",
+      "twoFactorEnforced": "2FA erzwungen",
+      "enforce2FA": "2FA erzwingen",
+      "actions": "Aktionen",
+      "actionSuccess": "Aktion erfolgreich abgeschlossen!",
+      "actionFailed": "Ein Fehler ist aufgetreten",
+      "statusUpdated": "Benutzerstatus erfolgreich aktualisiert!",
+      "updateFailed": "Ein Fehler ist aufgetreten",
       "enabled": "Aktiviert",
       "disabled": "Deaktiviert",
       "locked": "Gesperrt",
@@ -283,6 +302,16 @@
         "twoFactor": "2FA",
         "lockout": "Sperrung",
         "actions": "Aktionen"
+      },
+      "deleteModal": {
+        "title": "Benutzer löschen",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden!",
+        "message": "Sind Sie sicher, dass Sie den Benutzer löschen möchten",
+        "confirm": "Ja, Benutzer löschen",
+        "cancel": "Abbrechen",
+        "deleting": "Wird gelöscht...",
+        "success": "Benutzer erfolgreich gelöscht!",
+        "failed": "Benutzer konnte nicht gelöscht werden"
       }
     },
     "auditLogs": {

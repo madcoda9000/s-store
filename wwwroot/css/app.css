@@ -550,6 +550,12 @@ strong {
   gap: var(--space-sm);
 }
 
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
 /* === FORMS === */
 .form {
   display: flex;
@@ -775,6 +781,32 @@ table.grid tbody tr:hover {
   background: var(--color-warning-light);
   color: var(--color-warning);
   border-color: var(--color-warning);
+}
+
+/* Icon badges - filled circle icons with colored backgrounds */
+/* For SVG <use> elements, we need to style the SVG itself with color and fill */
+.icon-badge-success svg,
+.icon-badge-success .icon {
+  color: var(--color-success);
+  fill: var(--color-success);
+}
+
+.icon-badge-danger svg,
+.icon-badge-danger .icon {
+  color: var(--color-danger);
+  fill: var(--color-danger);
+}
+
+.icon-badge-warning svg,
+.icon-badge-warning .icon {
+  color: var(--color-warning);
+  fill: var(--color-warning);
+}
+
+.icon-badge-primary svg,
+.icon-badge-primary .icon {
+  color: var(--color-accent);
+  fill: var(--color-accent);
 }
 
 /* === ALERTS === */

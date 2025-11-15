@@ -406,7 +406,7 @@ function renderLogRow(log) {
         ? `<td>
             ${log.hasEncryptedInfo 
               ? `<button class="btn btn-sm btn-warning decrypt-btn" data-log-id="${log.id}" data-log-action="${escapeHtml(log.action)}" data-log-timestamp="${escapeHtml(log.timestamp)}" data-log-user="${escapeHtml(log.user)}">
-                  ${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decrypt')}
+                  ${icon(Icons.KEY, 'icon')} ${t('admin.auditLogs.decrypt')}
                 </button>`
               : `<span class="text-muted no-encrypted-data">${t('admin.auditLogs.noEncryptedData')}</span>`
             }
