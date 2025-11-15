@@ -367,7 +367,9 @@
       "context": "Kontext",
       "message": "Nachricht",
       "searchPlaceholder": "Suche nach Benutzer, Aktion, Kontext oder Nachricht...",
-      "clear": "Löschen"
+      "clear": "Löschen",
+      "disabledTitle": "Request-Protokollierung deaktiviert",
+      "disabledMessage": "Request-Protokollierung ist derzeit in der Server-Konfiguration deaktiviert. Um die Request-Protokollierung zu aktivieren, legen Sie die Umgebungsvariable REQUEST_LOGGING_ENABLED auf \"true\" auf dem Server fest."
     },
     "logs": {
       "timestamp": "Zeitstempel",

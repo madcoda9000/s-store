@@ -59,6 +59,7 @@ export const Icons = {
   // File operations
   DOWNLOAD: 'download',
   PRINTER: 'printer',
+  FILE_TEXT: 'file-text',
   
   // Actions & Navigation
   ARROW_LEFT: 'arrow-left',

@@ -367,7 +367,9 @@
       "context": "Context",
       "message": "Message",
       "searchPlaceholder": "Search by user, action, context, or message...",
-      "clear": "Clear"
+      "clear": "Clear",
+      "disabledTitle": "Request Logging Disabled",
+      "disabledMessage": "Request logging is currently disabled in the server configuration. To enable request logging, set the REQUEST_LOGGING_ENABLED environment variable to \"true\" on the server."
     },
     "logs": {
       "timestamp": "Timestamp",

@@ -25,6 +25,19 @@ const state = {
 export function registerRequestLogs(route) {
   route('/logs/request', async (el) => {
     try {
+      // First check if request logging is enabled
+      const config = await api('/api/config');
+      if (config.requestLogging?.enabled === false) {
+        el.innerHTML = `
+          <div class="alert alert-warning">
+            <h3>${t('admin.requestLogs.disabledTitle')}</h3>
+            <p>${t('admin.requestLogs.disabledMessage')}</p>
+            <a href="#/logs" class="btn btn-primary mt-3">${t('common.backToLogs')}</a>
+          </div>
+        `;
+        return;
+      }
+
       // Reset state on route entry
       state.currentPage = 1;
       state.pageSize = 10;

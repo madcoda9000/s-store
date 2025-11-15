@@ -1,6 +1,7 @@
 // /wwwroot/js/header.js
 
 import { icon, Icons } from './icons.js';
+import { api } from './api.js';
 import { updateThemeToggleIcon } from './app.js';
 import { setLanguage, getCurrentLanguage, getSupportedLanguages, onLanguageChange } from './i18n.js';
 
@@ -357,12 +358,22 @@ function setupMobileMenu() {
 /**
  * Updates the navigation menu based on user roles
  * @param {boolean} isAdmin - Whether the user is an admin
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function updateNavigation(isAdmin) {
+async function updateNavigation(isAdmin) {
   const nav = document.getElementById('main-nav');
   if (!nav) return;
   
+  // Fetch config first
+  let requestLoggingEnabled = true; // default to true if we can't fetch the config
+  try {
+    const config = await api('/api/config');
+    requestLoggingEnabled = config.requestLogging?.enabled !== false;
+  } catch (error) {
+    console.warn('Failed to fetch config, using default values', error);
+  }
+
+  // Rest of the function remains the same...
   const navItems = [];
   
   // Always show Home link
@@ -383,17 +394,24 @@ function updateNavigation(isAdmin) {
       </div>
     `);
     
-    // Logs Dropdown
+    // Logs Dropdown - only show Request Logs if enabled
+    const logItems = [
+      `<a href="#/logs/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>`,
+      `<a href="#/logs/system" class="nav-dropdown-item">${icon(Icons.SETTINGS, 'icon')} System Logs</a>`,
+      `<a href="#/logs/mail" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Mail Logs</a>`
+    ];
+
+    if (requestLoggingEnabled) {
+      logItems.push(`<a href="#/logs/request" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Request Logs</a>`);
+    }
+
     navItems.push(`
       <div class="nav-dropdown">
         <button class="nav-link nav-dropdown-toggle" type="button">
           Logs ${icon(Icons.CHEVRON_DOWN, 'icon icon-sm')}
         </button>
         <div class="nav-dropdown-menu">
-          <a href="#/logs/audit" class="nav-dropdown-item">${icon(Icons.FILE_TEXT, 'icon')} Audit Logs</a>
-          <a href="#/logs/system" class="nav-dropdown-item">${icon(Icons.SETTINGS, 'icon')} System Logs</a>
-          <a href="#/logs/mail" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Mail Logs</a>
-          <a href="#/logs/request" class="nav-dropdown-item">${icon(Icons.MAIL, 'icon')} Request Logs</a>
+          ${logItems.join('')}
         </div>
       </div>
     `);
