@@ -85,12 +85,12 @@ namespace sstore.Controllers
                 twoFactorEnabled = user.TwoFactorEnabled,
                 twoFactorMethod = user.TwoFactorMethod,
                 twoFactorEnforced = user.TwoFactorEnforced,
-                roles = roles
+                roles
             });
         }
 
         /// <summary>
-        /// Logs a user in, using email and password.
+        /// Logs a user in, using username and password.
         /// </summary>
         /// <param name="dto">The login data to use for authentication.</param>
         /// <returns>
@@ -863,7 +863,7 @@ namespace sstore.Controllers
                     { "current_year", DateTime.Now.Year }
                 };
 
-                    var job = await emailService.SendEmailAsync(
+                    await emailService.SendEmailAsync(
                         templateName: "welcome",
                         subject: "Welcome to S-Store!",
                         toEmail: user.Email!,
@@ -964,7 +964,7 @@ namespace sstore.Controllers
                     { "current_year", DateTime.Now.Year }
                 };
 
-                    var job = await emailService.SendEmailAsync(
+                    await emailService.SendEmailAsync(
                         templateName: "welcome",
                         subject: "Welcome to S-Store!",
                         toEmail: user.Email!,

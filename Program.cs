@@ -235,7 +235,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 // CORS Configuration - only if frontend is on different origin
 var allowedOrigins = Environment.GetEnvironmentVariable("ALLOWED_ORIGINS")?.Split(',')
-    ?? new[] { "http://localhost:5173", "http://localhost:3000" }; // Default for dev
+    ?? ["http://localhost:5173", "http://localhost:3000"]; // Default for dev
 
 builder.Services.AddCors(options =>
 {
@@ -335,18 +335,18 @@ builder.Services.AddOptions();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<IpRateLimitOptions>(opt =>
 {
-    opt.GeneralRules = new()
-    {
+    opt.GeneralRules =
+    [
         // === CRITICAL AUTHENTICATION ENDPOINTS ===
         new() { Endpoint = "POST:/auth/login", Limit = 5, Period = "15m" },
         new() { Endpoint = "POST:/auth/2fa/verify-authenticator", Limit = 5, Period = "15m" },
         new() { Endpoint = "POST:/auth/2fa/verify-email", Limit = 5, Period = "15m" },
         new() { Endpoint = "POST:/auth/reset-password", Limit = 3, Period = "1h" },
-        new() { Endpoint = "POST:/auth/forgot-password", Limit = 3, Period = "1h" },  // KORRIGIERT: 60mm -> 1h
+        new() { Endpoint = "POST:/auth/forgot-password", Limit = 3, Period = "1h" },
         
         // === REGISTRATION AND VERIFICATION ===
         new() { Endpoint = "POST:/auth/register", Limit = 3, Period = "1h" },
-        new() { Endpoint = "POST:/auth/verify-email", Limit = 10, Period = "1h" },  // KORRIGIERT: verify.email -> verify-email
+        new() { Endpoint = "POST:/auth/verify-email", Limit = 10, Period = "1h" },
         new() { Endpoint = "POST:/auth/verify-email-code", Limit = 10, Period = "1h" },
         new() { Endpoint = "POST:/auth/resend-verification", Limit = 3, Period = "1h" },
         
@@ -361,15 +361,14 @@ builder.Services.Configure<IpRateLimitOptions>(opt =>
         new() { Endpoint = "*:/admin/*", Limit = 100, Period = "10m" },
         new() { Endpoint = "*:/profile/*", Limit = 20, Period = "10m" },
         new() { Endpoint = "*:/api/*", Limit = 200, Period = "10m" }
-    };
+    ];
     
     // Endpoint whitelist
-    opt.EndpointWhitelist = new List<string>
-    {
+    opt.EndpointWhitelist = [
         "GET:/api/csrf-token",
         "GET:/",
         "GET:/favicon.ico"
-    };
+    ];
     
     // Enable endpoint-specific rate limiting
     opt.EnableEndpointRateLimiting = true;

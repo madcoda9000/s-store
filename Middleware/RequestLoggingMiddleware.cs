@@ -11,6 +11,12 @@ namespace sstore.Middleware
     /// </summary>
     public class RequestLoggingMiddleware
     {
+        private static readonly JsonSerializerOptions _logSerializerOptions = new()
+        {
+            WriteIndented = false,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestLoggingMiddleware> _logger;
         private readonly RequestLoggingOptions _options;
@@ -32,8 +38,8 @@ namespace sstore.Middleware
             _options = options?.Value ?? new RequestLoggingOptions();
 
             // Initialize excluded paths
-            _excludedPaths = new HashSet<string>(_options.ExcludedPaths ?? Array.Empty<string>(),
-                StringComparer.OrdinalIgnoreCase);
+            var excluded = _options.ExcludedPaths ?? [];
+            _excludedPaths = excluded.ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -179,7 +185,7 @@ namespace sstore.Middleware
                 var charset = contentType.Split(';')
                     .Select(s => s.Trim())
                     .FirstOrDefault(s => s.StartsWith("charset=", StringComparison.OrdinalIgnoreCase))?
-                    .Substring("charset=".Length);
+                    ["charset=".Length..];
 
                 return !string.IsNullOrEmpty(charset)
                     ? Encoding.GetEncoding(charset)
@@ -207,7 +213,7 @@ namespace sstore.Middleware
                 var charset = contentType.Split(';')
                     .Select(s => s.Trim())
                     .FirstOrDefault(s => s.StartsWith("charset=", StringComparison.OrdinalIgnoreCase))?
-                    .Substring("charset=".Length);
+                    ["charset=".Length..];
 
                 return !string.IsNullOrEmpty(charset)
                     ? Encoding.GetEncoding(charset)
@@ -240,9 +246,9 @@ namespace sstore.Middleware
             {
                 var logData = new
                 {
-                    Method = request.Method,
+                    request.Method,
                     Path = request.Path + request.QueryString,
-                    StatusCode = response.StatusCode,
+                    response.StatusCode,
                     Headers = _options.LogHeaders ? request.Headers
                         .Where(h => !_options.ExcludedHeaders.Contains(h.Key, StringComparer.OrdinalIgnoreCase))
                         .ToDictionary(h => h.Key, h => h.Value.ToString()) : null,
@@ -254,11 +260,7 @@ namespace sstore.Middleware
                     User = context.User.Identity?.Name ?? "anonymous"
                 };
 
-                var logMessage = JsonSerializer.Serialize(logData, new JsonSerializerOptions
-                {
-                    WriteIndented = false,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
+                var logMessage = JsonSerializer.Serialize(logData, _logSerializerOptions);
 
                 await logService.LogRequestAsync(
                     action: $"{request.Method} {request.Path}",
@@ -279,10 +281,16 @@ namespace sstore.Middleware
         /// <param name="maxLength"></param>
         /// <param name="wasTruncated"></param>
         /// <returns></returns>
-        private string TruncateIfNeeded(string content, int maxLength, out bool wasTruncated)
+        private static string TruncateIfNeeded(string content, int maxLength, out bool wasTruncated)
         {
             wasTruncated = content.Length > maxLength;
-            return wasTruncated ? content.Substring(0, maxLength) + " [TRUNCATED]" : content;
+            if (!wasTruncated)
+            {
+                return content;
+            }
+
+            var truncatedSpan = content.AsSpan(0, maxLength);
+            return string.Concat(truncatedSpan, " [TRUNCATED]".AsSpan());
         }
 
         /// <summary>
@@ -364,17 +372,17 @@ namespace sstore.Middleware
         /// <summary>
         /// Gets or sets the list of HTTP methods to include in request body logging
         /// </summary>
-        public string[] IncludedMethods { get; set; } = new[] { "POST", "PUT", "PATCH" };
+        public string[] IncludedMethods { get; set; } = ["POST", "PUT", "PATCH"];
 
         /// <summary>
         /// Gets or sets the list of paths to exclude from logging
         /// </summary>
-        public string[] ExcludedPaths { get; set; } = Array.Empty<string>();
+        public string[] ExcludedPaths { get; set; } = [];
 
         /// <summary>
         /// Gets or sets the list of headers to exclude from logging
         /// </summary>
-        public string[] ExcludedHeaders { get; set; } = new[] { "Authorization", "Cookie" };
+        public string[] ExcludedHeaders { get; set; } = ["Authorization", "Cookie"];
 
         /// <summary>
         /// Gets or sets the maximum size in bytes for request bodies to log
