@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using sstore.Models;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Data
 {
@@ -10,6 +11,11 @@ namespace sstore.Data
     /// </summary>
     public class AppDb : IdentityDbContext<ApplicationUser, IdentityRole, string>
     {
+        /// <summary>
+        /// Constructor for the AppDb
+        /// </summary>
+        /// <param name="options">DbContextOptions for AppDb</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public AppDb(DbContextOptions<AppDb> options) : base(options)
         {
         }

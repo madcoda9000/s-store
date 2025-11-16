@@ -7,6 +7,7 @@ using sstore.Services;
 using sstore.Models;
 using sstore.Helpers;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -35,6 +36,7 @@ namespace sstore.Controllers
         /// <param name="tokenService">Temporary token service</param>
         /// <param name="notificationService">Security notification service</param>
         /// <param name="sessionManagement">Session management service</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public AuthController(
             SignInManager<ApplicationUser> signIn,
             UserManager<ApplicationUser> users,

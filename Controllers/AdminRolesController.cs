@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Antiforgery;
 using sstore.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -27,6 +28,7 @@ namespace sstore.Controllers
         /// <param name="roles">The role manager to use for retrieving and updating role data.</param>
         /// <param name="users">The user manager to use for retrieving and updating user data.</param>
         /// <param name="anti">The antiforgery service to use for validating anti-forgery tokens.</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public AdminRolesController(ISecureLogService log, RoleManager<IdentityRole> roles, UserManager<ApplicationUser> users, IAntiforgery anti)
         { _roles = roles; _users = users; _log = log; _anti = anti; }
 
@@ -36,19 +38,25 @@ namespace sstore.Controllers
         /// <returns>A list of role information.</returns>
         [HttpGet("")]
         public IActionResult List()
-            => Ok(_roles.Roles.Select(r => new { r.Id, r.Name }));
+            => Ok(_roles.Roles.Select(r => new { 
+                id = r.Id, 
+                name = r.Name, 
+                normalizedName = r.NormalizedName, 
+                concurrencyStamp = r.ConcurrencyStamp 
+            }));
 
         /// <summary>
         /// Creates a new role
         /// </summary>
         /// <param name="dto">The role data to create</param>
         /// <returns>A result indicating whether the creation was successful</returns>
-        [HttpPost("create")]
+        [HttpPost("")]
         [ValidateAntiForgeryApi]
         public async Task<IActionResult> Create([FromBody] RoleDto dto)
         {
             var currentUserName = User.Identity?.Name ?? "anonymous";
-            var res = await _roles.CreateAsync(new IdentityRole(dto.Name));
+            var newRole = new IdentityRole(dto.Name);
+            var res = await _roles.CreateAsync(newRole);
             if (!res.Succeeded) return BadRequest(res.Errors);
 
             await _log.LogAuditAsync(
@@ -58,7 +66,33 @@ namespace sstore.Controllers
                 currentUserName
             );
             var tokens = _anti.GetAndStoreTokens(HttpContext);
-            return Ok(new { ok = true, csrfToken = tokens.RequestToken });
+            return Ok(new { 
+                ok = true, 
+                csrfToken = tokens.RequestToken,
+                role = new { 
+                    id = newRole.Id, 
+                    name = newRole.Name, 
+                    normalizedName = newRole.NormalizedName,
+                    concurrencyStamp = newRole.ConcurrencyStamp
+                }
+            });
+        }
+
+        /// <summary>
+        /// Checks if a role has any users assigned to it
+        /// </summary>
+        /// <param name="id">The ID of the role to check</param>
+        /// <returns>Information about whether the role has users and the count</returns>
+        [HttpGet("{id}/check-users")]
+        public async Task<IActionResult> CheckUsers(string id)
+        {
+            var role = await _roles.FindByIdAsync(id);
+            if (role is null) return NotFound();
+
+            var usersInRole = await _users.GetUsersInRoleAsync(role.Name!);
+            var userCount = usersInRole.Count;
+
+            return Ok(new { hasUsers = userCount > 0, userCount });
         }
 
         /// <summary>
@@ -69,7 +103,7 @@ namespace sstore.Controllers
         /// <remarks>
         /// If the role is currently in use, a Conflict response will be returned.
         /// </remarks>
-        [HttpDelete("{id}/delete")]
+        [HttpDelete("{id}")]
         [ValidateAntiForgeryApi]
         public async Task<IActionResult> Delete(string id)
         {

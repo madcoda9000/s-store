@@ -13,18 +13,18 @@ namespace sstore.Services
     /// </summary>
     public class SecureLogService : ISecureLogService
     {
-        private readonly AppDb _db;
+        private readonly IServiceProvider _serviceProvider;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IDataProtectionService _dataProtection;
 
         public SecureLogService(
-            AppDb db, 
+            IServiceProvider serviceProvider,
             IHttpContextAccessor httpContextAccessor, 
             UserManager<ApplicationUser> userManager,
             IDataProtectionService dataProtection)
         {
-            _db = db;
+            _serviceProvider = serviceProvider;
             _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _dataProtection = dataProtection;
@@ -92,8 +92,13 @@ namespace sstore.Services
                 Timestamp = DateTime.UtcNow
             };
 
-            _db.Logs.Add(logEntry);
-            await _db.SaveChangesAsync();
+            // Use a separate scope to avoid concurrency issues with the main DbContext
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+                db.Logs.Add(logEntry);
+                await db.SaveChangesAsync();
+            }
 
             return logEntry;
         }

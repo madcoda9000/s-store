@@ -349,6 +349,45 @@
         "newPasswordHint": "Nur ausfüllen, wenn Sie das Passwort ändern möchten"
       }
     },
+    "roles": {
+      "title": "Rollen verwalten",
+      "createRole": "Rolle erstellen",
+      "search": "Suche",
+      "searchPlaceholder": "Rollen suchen...",
+      "clearSearch": "Löschen",
+      "showPerPage": "Anzeigen",
+      "perPage": "pro Seite",
+      "showing": "Zeige {{start}} bis {{end}} von {{total}} Rollen",
+      "noRolesFound": "Keine Rollen gefunden",
+      "loadingRoles": "Lade Rollen...",
+      "name": "Rollenname",
+      "normalizedName": "Normalisierter Name",
+      "actions": "Aktionen",
+      "delete": "Löschen",
+      "createModal": {
+        "title": "Neue Rolle erstellen",
+        "roleName": "Rollenname",
+        "roleNamePlaceholder": "Rollenname eingeben...",
+        "roleNameHint": "Geben Sie einen eindeutigen Rollennamen ein (z.B. Editor, Moderator)",
+        "roleNameRequired": "Rollenname ist erforderlich",
+        "createButton": "Rolle erstellen",
+        "creating": "Wird erstellt...",
+        "successTitle": "Erfolg",
+        "successMessage": "Rolle erfolgreich erstellt"
+      },
+      "deleteModal": {
+        "title": "Rolle löschen",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden!",
+        "message": "Möchten Sie die Rolle wirklich löschen",
+        "confirm": "Ja, Rolle löschen",
+        "cancel": "Abbrechen",
+        "checking": "Prüfe auf Benutzer in dieser Rolle...",
+        "hasUsers": "Diese Rolle hat {{count}} Benutzer. Bitte entfernen Sie alle Benutzer aus dieser Rolle, bevor Sie sie löschen.",
+        "deleting": "Wird gelöscht...",
+        "successTitle": "Erfolg",
+        "successMessage": "Rolle erfolgreich gelöscht"
+      }
+    },
     "auditLogs": {
       "title": "Audit Logs",
       "searchPlaceholder": "Suche nach Aktion, Kontext, Nachricht oder Benutzer...",

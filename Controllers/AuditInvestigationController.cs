@@ -7,6 +7,7 @@ using sstore.Filters;
 using sstore.Models;
 using sstore.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -24,6 +25,14 @@ namespace sstore.Controllers
         private readonly IAntiforgery _anti;
         private readonly ISecureLogService _log;
 
+        /// <summary>
+        /// Constructor for the AuditInvestigationController
+        /// </summary>
+        /// <param name="db">Database context</param>
+        /// <param name="dataProtection">Data protection service</param>
+        /// <param name="log">Logging service</param>
+        /// <param name="anti">Antiforgery service</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public AuditInvestigationController(
             AppDb db,
             IDataProtectionService dataProtection,

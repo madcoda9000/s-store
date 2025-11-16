@@ -204,7 +204,7 @@ export function translateElement(element) {
     }
 
     const childTitleKey = child.getAttribute('data-i18n-title');
-    if (childTitleKey) {
+    if (childTitleKey && child instanceof HTMLElement) {
       child.title = t(childTitleKey);
     }
   });

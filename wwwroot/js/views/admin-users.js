@@ -470,7 +470,7 @@ function openDeleteConfirmModal(userId, userName, el) {
             ${icon(Icons.TRASH, 'icon')} ${t('admin.users.deleteModal.confirm') || 'Yes, Delete User'}
           </button>
           <button type="button" class="btn btn-secondary modal-cancel">
-            ${t('admin.users.deleteModal.cancel') || 'Cancel'}
+            ${icon(Icons.X, 'icon')} ${t('admin.users.deleteModal.cancel') || 'Cancel'}
           </button>
         </div>
       </div>
@@ -915,7 +915,7 @@ function renderUserForm(roles, userData, isEdit) {
           required
           minlength="3"
           maxlength="50"
-          pattern="[a-zA-Z0-9._-]+"
+          pattern="[a-zA-Z0-9._\\-]+"
         />
       </div>
 
@@ -1023,7 +1023,7 @@ function renderUserForm(roles, userData, isEdit) {
           ${icon(Icons.CHECK, 'icon')} ${isEdit ? t('admin.users.createModal.updateButton') : t('admin.users.createModal.createButton')}
         </button>
         <button type="button" class="btn btn-secondary modal-cancel">
-          ${t('admin.users.createModal.cancel')}
+          ${icon(Icons.X, 'icon')} ${t('admin.users.createModal.cancel')}
         </button>
       </div>
     </form>

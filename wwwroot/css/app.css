@@ -25,16 +25,16 @@
   --color-border-accent: #1e3a8a;
 
   /* Brand Colors - Classic Business Blue */
-  --color-primary: #0f172a;
-  --color-primary-hover: #1e293b;
+  --color-primary: #131e36;
+  --color-primary-hover: #2f4064;
   --color-primary-light: #e0e7ff;
 
-  --color-accent: #1e3a8a;
-  --color-accent-hover: #2e51c4;
+  --color-accent: #15285c;
+  --color-accent-hover: #1a3170;
   --color-accent-light: #dbeafe;
 
-  --color-success: #06ca41;
-  --color-success-hover: #05a134;
+  --color-success: #039930;
+  --color-success-hover: #209b45;
   --color-success-light: #d1fae5;
 
   --color-danger: #dc2626;
@@ -2178,7 +2178,7 @@ table.grid tbody tr:hover {
 /* === TOAST NOTIFICATIONS === */
 .toast-container {
   position: fixed;
-  top: var(--space-lg);
+  bottom: var(--space-lg);
   right: var(--space-lg);
   z-index: 9999;
   display: flex;

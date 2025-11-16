@@ -349,6 +349,45 @@
         "newPasswordHint": "Only fill if you want to change the password"
       }
     },
+    "roles": {
+      "title": "Manage Roles",
+      "createRole": "Create Role",
+      "search": "Search",
+      "searchPlaceholder": "Search roles...",
+      "clearSearch": "Clear",
+      "showPerPage": "Show",
+      "perPage": "per page",
+      "showing": "Showing {{start}} to {{end}} of {{total}} roles",
+      "noRolesFound": "No roles found",
+      "loadingRoles": "Loading roles...",
+      "name": "Role Name",
+      "normalizedName": "Normalized Name",
+      "actions": "Actions",
+      "delete": "Delete",
+      "createModal": {
+        "title": "Create New Role",
+        "roleName": "Role Name",
+        "roleNamePlaceholder": "Enter role name...",
+        "roleNameHint": "Enter a unique role name (e.g., Editor, Moderator)",
+        "roleNameRequired": "Role name is required",
+        "createButton": "Create Role",
+        "creating": "Creating...",
+        "successTitle": "Success",
+        "successMessage": "Role created successfully"
+      },
+      "deleteModal": {
+        "title": "Delete Role",
+        "warning": "This action cannot be undone!",
+        "message": "Are you sure you want to delete the role",
+        "confirm": "Yes, Delete Role",
+        "cancel": "Cancel",
+        "checking": "Checking for users in this role...",
+        "hasUsers": "This role has {{count}} user(s). Please remove all users from this role before deleting it.",
+        "deleting": "Deleting...",
+        "successTitle": "Success",
+        "successMessage": "Role deleted successfully"
+      }
+    },
     "auditLogs": {
       "title": "Audit Logs",
       "searchPlaceholder": "Search by action, context, message, or user...",

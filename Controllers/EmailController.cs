@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using sstore.Filters;
 using sstore.Services;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -15,6 +16,12 @@ namespace sstore.Controllers
         private readonly IEmailService _emailService;
         private readonly ISecureLogService _logService;
 
+        /// <summary>
+        /// Constructor for the EmailController
+        /// </summary>
+        /// <param name="emailService">Email service for sending emails</param>
+        /// <param name="logService">Logging service for logging email events</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public EmailController(IEmailService emailService, ISecureLogService logService)
         {
             _emailService = emailService;

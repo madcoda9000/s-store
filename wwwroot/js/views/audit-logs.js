@@ -419,7 +419,7 @@ function renderLogRow(log) {
           : ''
         }
         ${isDecrypted 
-          ? `<span class="user-decrypted">${escapeHtml(displayUser)}</span>${log.pseudonym ? `<br><span class="user-pseudonym-small text-muted">${escapeHtml(log.pseudonym)}</span>` : ''}`
+          ? `<span class="user-decrypted">${escapeHtml(displayUser)}</span>${log.user ? `<br><span class="user-pseudonym-small text-muted">${escapeHtml(log.user)}</span>` : ''}`
           : escapeHtml(displayUser || log.user || '')
         }
       </td>
@@ -687,10 +687,10 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
 
           <div class="button-group">
             <button type="submit" class="btn btn-tertiary">
-              ${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton')}
+              ${icon(Icons.KEY, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton')}
             </button>
             <button type="button" class="btn btn-secondary modal-cancel">
-              ${t('admin.auditLogs.decryptModal.cancel')}
+              ${icon(Icons.X, 'icon')} ${t('admin.auditLogs.decryptModal.cancel')}
             </button>
           </div>
 

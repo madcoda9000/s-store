@@ -67,6 +67,8 @@ interface AuditLogEntry {
   hasEncryptedInfo: boolean;
   /** Decrypted username (only present if decrypted) */
   decryptedUser?: string;
+  /** Pseudonymized user (stored when individually decrypted for display) */
+  pseudonym?: string;
 }
 
 /**
@@ -175,6 +177,20 @@ interface AdminUser {
   twoFactorMethod: string | null;
   /** wether ldap login is enabled */
   ldapLoginEnabled: number;
+}
+
+/**
+ * Role object
+ */
+interface Role {
+  /** Role ID */
+  id: string;
+  /** Role name */
+  name: string;
+  /** Normalized role name (uppercase) */
+  normalizedName: string;
+  /** Concurrency stamp */
+  concurrencyStamp: string | null;
 }
 
 /**
@@ -330,7 +346,7 @@ interface ApiOptions {
  * Route render function
  */
 interface RouteRenderFn {
-  (element: HTMLElement): void | Promise<void>;
+  (element: HTMLElement, params?: URLSearchParams): void | Promise<void>;
 }
 
 /**

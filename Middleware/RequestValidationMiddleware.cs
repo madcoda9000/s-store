@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Middleware
 {
@@ -18,6 +19,7 @@ namespace sstore.Middleware
         /// </summary>
         /// <param name="next"></param>
         /// <param name="logger"></param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]    
         public RequestValidationMiddleware(RequestDelegate next, ILogger<RequestValidationMiddleware> logger)
         {
             _next = next;
