@@ -890,6 +890,50 @@ table.grid tbody tr:hover {
   max-width: 400px;
 }
 
+.auth-login {  
+  padding: var(--space-2xl) var(--space-md);
+}
+
+.auth-login-wrapper {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.auth-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.auth-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.auth-panel {
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+}
+
+.auth-form {
+  gap: var(--space-md);
+}
+
+.auth-link-row {
+  justify-content: space-between;
+}
+
+.auth-mobile-footer {
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
 .auth-theme-toggle {
   margin-top: var(--space-lg);
   display: flex;
@@ -1035,10 +1079,55 @@ table.grid tbody tr:hover {
     padding: var(--space-sm) 0;
   }
 
+  .auth-container.auth-login {
+    padding: 0;
+  }
+
   .auth-card {
     border: none;
     background: transparent;
     padding: 0;
+  }
+
+  body {
+    background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg) 40%);
+  }
+
+  .auth-login {
+    padding: 0;    
+    min-height: 100vh;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .auth-login-wrapper {
+    gap: var(--space-md);
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
+    min-height: 100vh;
+  }
+
+  .auth-panel {
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+  }
+
+  .auth-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: var(--space-md);
+  }
+
+  .auth-link-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .auth-mobile-footer {
+    margin-top: var(--space-md);
+    text-align: center;
   }
 
   .auth-wrapper {
@@ -1049,7 +1138,7 @@ table.grid tbody tr:hover {
   .form,
   .auth-header,
   .auth-footer {
-    background: var(--color-bg);
+    background: transparent;
     border: none; /* <-- Border komplett weg */
     border-radius: 0;
     padding: var(--space-sm);

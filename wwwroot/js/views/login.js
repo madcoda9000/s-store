@@ -16,16 +16,17 @@ export function registerLogin(route) {
     hideHeader();
 
     el.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-wrapper">
-          <div class="card auth-card">
-            
-            <div class="auth-header">
-              <h1 class="auth-logo">${t('common.appName')}</h1>
-              <p class="text-muted">${t('auth.login.title')}</p>
+      <div class="auth-container auth-login">
+        <div class="auth-wrapper auth-login-wrapper">
+          <div class="card auth-card auth-panel">
+            <div class="auth-hero">
+              <div class="auth-hero-text">
+                <h1 class="auth-logo">${t('common.appName')}</h1>
+                <p class="text-muted">${t('auth.login.title')}</p>
+              </div>
             </div>
-            
-            <form id="login-form" class="form">
+
+            <form id="login-form" class="form auth-form">
               <div class="form-group">
                 <label class="label" for="username">${t('auth.login.emailOrUsername')}</label>
                 <input 
@@ -50,7 +51,7 @@ export function registerLogin(route) {
                   required>
               </div>
               
-              <div class="form-group form-row">
+              <div class="form-group form-row auth-link-row">
                 <label class="checkbox">
                   <input type="checkbox" name="remember">
                   <span>${t('auth.login.rememberMe')}</span>
@@ -61,17 +62,15 @@ export function registerLogin(route) {
               <div id="login-error" class="error hidden"></div>
               
               <button type="submit" class="btn btn-primary btn-block">${t('auth.login.signIn')}</button>
+              <p class="auth-register-inline text-muted" data-role="login-register-link-description">
+                ${t('auth.login.noAccount')} <a href="#/register" class="link" data-role="login-register-link">${t('auth.login.signUp')}</a>
+              </p>
             </form>
-            
-            <div class="auth-footer">
-              <p class="text-muted" data-role="login-register-link-description">${t('auth.login.noAccount')} <a href="#/register" class="link" data-role="login-register-link">${t('auth.login.signUp')}</a></p>
-            </div>
           </div>
 
           <div class="auth-theme-toggle">
             <button class="btn btn-icon" id="auth-theme-toggle" aria-label="${t('common.toggleTheme')}">${getThemeIcon()}</button>
           </div>
-        
         </div>
       </div>`;
 
