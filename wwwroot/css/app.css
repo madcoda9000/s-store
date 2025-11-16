@@ -890,11 +890,15 @@ table.grid tbody tr:hover {
   max-width: 400px;
 }
 
-.auth-login {  
+.auth-login,
+.auth-register,
+.auth-forgot {
   padding: var(--space-2xl) var(--space-md);
 }
 
-.auth-login-wrapper {
+.auth-login-wrapper,
+.auth-register-wrapper,
+.auth-forgot-wrapper {
   width: 100%;
   max-width: 420px;
   display: flex;
@@ -932,6 +936,11 @@ table.grid tbody tr:hover {
 .auth-mobile-footer {
   text-align: center;
   font-size: var(--text-sm);
+}
+
+.auth-register-inline {
+  text-align: center;
+  margin-top: var(--space-md);
 }
 
 .auth-theme-toggle {
@@ -1093,14 +1102,18 @@ table.grid tbody tr:hover {
     background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg) 40%);
   }
 
-  .auth-login {
-    padding: 0;    
+  .auth-login,
+  .auth-register,
+  .auth-forgot {
+    padding: 0;
     min-height: 100vh;
     width: 100%;
     align-items: stretch;
   }
 
-  .auth-login-wrapper {
+  .auth-login-wrapper,
+  .auth-register-wrapper,
+  .auth-forgot-wrapper {
     gap: var(--space-md);
     padding: var(--space-xl) var(--space-md) var(--space-lg);
     min-height: 100vh;
@@ -1151,7 +1164,9 @@ table.grid tbody tr:hover {
   .auth-footer {
     margin-top: var(--space-sm);
   }
-  
+
+
+
   .profile-dropdown {
     order: 2;
   }

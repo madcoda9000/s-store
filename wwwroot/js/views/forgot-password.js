@@ -22,16 +22,17 @@ export function registerForgotPassword(route) {
     hideHeader();
 
     el.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-wrapper">
-          <div class="card auth-card">
-            
-            <div class="auth-header">
-              <h1 class="auth-logo">${t('common.appName')}</h1>
-              <p class="text-muted">${t('auth.forgotPassword.title')}</p>
+      <div class="auth-container auth-forgot">
+        <div class="auth-wrapper auth-forgot-wrapper">
+          <div class="card auth-card auth-panel">
+            <div class="auth-hero">
+              <div class="auth-hero-text">
+                <h1 class="auth-logo">${t('common.appName')}</h1>
+                <p class="text-muted">${t('auth.forgotPassword.title')}</p>
+              </div>
             </div>
             
-            <form id="forgot-password-form" class="form">
+            <form id="forgot-password-form" class="form auth-form">
               <p class="text-muted mb-5">
                 ${t('auth.forgotPassword.description')}
               </p>
@@ -54,14 +55,12 @@ export function registerForgotPassword(route) {
               <button type="submit" class="btn btn-primary btn-block">${t('auth.forgotPassword.sendResetLink')}</button>
             </form>
             
-            <div class="auth-footer">
-              <p class="text-muted">
-                <a href="#/login" class="link">${t('auth.forgotPassword.backToLogin')}</a>
-              </p>
-            </div>
+            <p class="auth-register-inline text-muted">
+              <a href="#/login" class="link">${t('auth.forgotPassword.backToLogin')}</a>
+            </p>
           </div>
 
-          <div class="auth-theme-toggle">
+          <div class="auth-theme-toggle hidden">
             <button class="btn btn-icon" id="auth-theme-toggle" aria-label="${t('common.toggleTheme')}">${getThemeIcon()}</button>
           </div>
         
@@ -71,22 +70,8 @@ export function registerForgotPassword(route) {
     const form = /** @type {HTMLFormElement} */ (el.querySelector("#forgot-password-form"));
     const errorEl = /** @type {HTMLElement} */ (el.querySelector("#forgot-password-error"));
     const successEl = /** @type {HTMLElement} */ (el.querySelector("#forgot-password-success"));
-    const authThemeToggle = el.querySelector("#auth-theme-toggle");
     const submitBtn = /** @type {HTMLButtonElement} */ (form.querySelector('button[type="submit"]'));
 
-    // Setup theme toggle for auth page
-    if (authThemeToggle) {
-      authThemeToggle.addEventListener("click", () => {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute("data-theme");
-        const newTheme = currentTheme === "light" ? "dark" : "light";
-        html.setAttribute("data-theme", newTheme);
-        localStorage.setItem("theme", newTheme);
-        
-        // Update icon
-        authThemeToggle.innerHTML = getThemeIcon();
-      });
-    }
 
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();

@@ -22,18 +22,19 @@ export function registerRegister(route) {
     hideHeader();
 
     el.innerHTML = `
-      <div class="auth-container">
-        <div class="auth-wrapper">
-          <div class="card auth-card">
-            
-            <div class="auth-header">
-              <h1 class="auth-logo">${t('common.appName')}</h1>
-              <p class="text-muted">${t('auth.register.title')}</p>
+      <div class="auth-container auth-register">
+        <div class="auth-wrapper auth-register-wrapper">
+          <div class="card auth-card auth-panel">
+            <div class="auth-hero">
+              <div class="auth-hero-text">
+                <h1 class="auth-logo">${t('common.appName')}</h1>
+                <p class="text-muted">${t('auth.register.title')}</p>
+              </div>
             </div>
-            
+
             <div id="register-success" class="alert alert-success hidden"></div>
             
-            <form id="register-form" class="form">
+            <form id="register-form" class="form auth-form">
               <div class="form-group">
                 <label class="label" for="email">${t('auth.register.email')}</label>
                 <input 
@@ -117,14 +118,13 @@ export function registerRegister(route) {
               <div id="register-error" class="error hidden"></div>
               
               <button type="submit" class="btn btn-primary btn-block" id="submit-btn">${t('auth.register.createAccount')}</button>
+              <p class="auth-register-inline text-muted" data-role="register-login-link-description">
+                ${t('auth.register.haveAccount')} <a href="#/login" class="link" data-role="register-login-link">${t('auth.register.signIn')}</a>
+              </p>
             </form>
-            
-            <div class="auth-footer">
-              <p class="text-muted">${t('auth.register.haveAccount')} <a href="#/login" class="link">${t('auth.register.signIn')}</a></p>
-            </div>
           </div>
 
-          <div class="auth-theme-toggle">
+          <div class="auth-theme-toggle hidden">
             <button class="btn btn-icon" id="auth-theme-toggle" aria-label="${t('common.toggleTheme')}">${getThemeIcon()}</button>
           </div>
         
