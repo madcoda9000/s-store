@@ -8,6 +8,7 @@ using sstore.Filters;
 using System.ComponentModel.DataAnnotations;
 using sstore.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace sstore.Controllers
 {
@@ -27,6 +28,7 @@ namespace sstore.Controllers
         /// <param name="log">The log service to use for logging operations.</param>
         /// <param name="anti">The antiforgery service to use for validating anti-forgery tokens.</param>
         /// <param name="context">The database context to use for accessing user data.</param>
+        [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Explicit constructor improves readability for dependency injection.")]
         public AdminUsersController(UserManager<ApplicationUser> users, ISecureLogService log, IAntiforgery anti, AppDb context)
         {
             this._users = users;

@@ -96,31 +96,34 @@ builder.Services.Configure<RequestLoggingOptions>(options =>
     var includedMethods = Environment.GetEnvironmentVariable("REQUEST_LOGGING_INCLUDED_METHODS");
     if (!string.IsNullOrEmpty(includedMethods))
     {
-        options.IncludedMethods = includedMethods
-            .Split(',')
-            .Select(m => m.Trim())
-            .Where(m => !string.IsNullOrEmpty(m))
-            .ToArray();
+        options.IncludedMethods = [
+            ..includedMethods
+                .Split(',')
+                .Select(m => m.Trim())
+                .Where(m => !string.IsNullOrEmpty(m))
+        ];
     }
     
     var excludedPaths = Environment.GetEnvironmentVariable("REQUEST_LOGGING_EXCLUDED_PATHS");
     if (!string.IsNullOrEmpty(excludedPaths))
     {
-        options.ExcludedPaths = excludedPaths
-            .Split(',')
-            .Select(p => p.Trim())
-            .Where(p => !string.IsNullOrEmpty(p))
-            .ToArray();
+        options.ExcludedPaths = [
+            ..excludedPaths
+                .Split(',')
+                .Select(p => p.Trim())
+                .Where(p => !string.IsNullOrEmpty(p))
+        ];
     }
     
     var excludedHeaders = Environment.GetEnvironmentVariable("REQUEST_LOGGING_EXCLUDED_HEADERS");
     if (!string.IsNullOrEmpty(excludedHeaders))
     {
-        options.ExcludedHeaders = excludedHeaders
-            .Split(',')
-            .Select(h => h.Trim())
-            .Where(h => !string.IsNullOrEmpty(h))
-            .ToArray();
+        options.ExcludedHeaders = [
+            ..excludedHeaders
+                .Split(',')
+                .Select(h => h.Trim())
+                .Where(h => !string.IsNullOrEmpty(h))
+        ];
     }
 });
 
@@ -321,6 +324,9 @@ if (isDevelopment)
         {
             options.IncludeXmlComments(xmlPath);
         }
+
+        // Add operation filter to display authorization requirements
+        options.OperationFilter<sstore.Filters.SwaggerAuthOperationFilter>();
     });
 }
 
@@ -435,15 +441,15 @@ app.Use(async (ctx, next) =>
         ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'"
         : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'";
     
-    ctx.Response.Headers["Content-Security-Policy"] = cspPolicy;
-    ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
-    ctx.Response.Headers["X-Frame-Options"] = "DENY";
+    ctx.Response.Headers.ContentSecurityPolicy = cspPolicy;
+    ctx.Response.Headers.XContentTypeOptions = "nosniff";
+    ctx.Response.Headers.XFrameOptions = "DENY";
     ctx.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     ctx.Response.Headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()";
 
     // Strict-Transport-Security only in production
     if (!isDevelopment)
-        ctx.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload";
+        ctx.Response.Headers.StrictTransportSecurity = "max-age=31536000; includeSubDomains; preload";
 
     await next();
 });
@@ -508,7 +514,7 @@ async static Task InitializeDatabaseAsync(WebApplication app)
         
         if (pendingMigrations.Any())
         {
-            logger.LogInformation($"Found {pendingMigrations.Count()} pending migrations. Applying...");
+            logger.LogInformation("Found {MigrationCount} pending migrations. Applying...", pendingMigrations.Count());
             await context.Database.MigrateAsync();
             logger.LogInformation("Migrations applied successfully.");
         }
@@ -522,21 +528,21 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
         if (!await roleManager.RoleExistsAsync(adminRoleName))
         {
-            logger.LogInformation($"Creating '{adminRoleName}' role...");
+            logger.LogInformation("Creating '{AdminRoleName}' role...", adminRoleName);
             var roleResult = await roleManager.CreateAsync(new IdentityRole(adminRoleName));
 
             if (roleResult.Succeeded)
             {
-                logger.LogInformation($"'{adminRoleName}' role created successfully.");
+                logger.LogInformation("'{AdminRoleName}' role created successfully.", adminRoleName);
             }
             else
             {
-                logger.LogError($"Failed to create '{adminRoleName}' role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                logger.LogError("Failed to create '{AdminRoleName}' role: {Errors}", adminRoleName, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
         }
         else
         {
-            logger.LogInformation($"'{adminRoleName}' role already exists.");
+            logger.LogInformation("'{AdminRoleName}' role already exists.", adminRoleName);
         }
 
         // Step 2.1: Create default AuditInvestigator role if it doesn't exist
@@ -544,21 +550,21 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
         if (!await roleManager.RoleExistsAsync(AuditInvestigatorRole))
         {
-            logger.LogInformation($"Creating '{AuditInvestigatorRole}' role...");
+            logger.LogInformation("Creating '{AuditInvestigatorRole}' role...", AuditInvestigatorRole);
             var roleResult = await roleManager.CreateAsync(new IdentityRole(AuditInvestigatorRole));
 
             if (roleResult.Succeeded)
             {
-                logger.LogInformation($"'{AuditInvestigatorRole}' role created successfully.");
+                logger.LogInformation("'{AuditInvestigatorRole}' role created successfully.", AuditInvestigatorRole);
             }
             else
             {
-                logger.LogError($"Failed to create '{AuditInvestigatorRole}' role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                logger.LogError("Failed to create '{AuditInvestigatorRole}' role: {Errors}", AuditInvestigatorRole, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
         }
         else
         {
-            logger.LogInformation($"'{AuditInvestigatorRole}' role already exists.");
+            logger.LogInformation("'{AuditInvestigatorRole}' role already exists.", AuditInvestigatorRole);
         }
         
         // Step 2.2: Create default User role if it doesn't exist
@@ -566,21 +572,21 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
         if (!await roleManager.RoleExistsAsync(UserRole))
         {
-            logger.LogInformation($"Creating '{UserRole}' role...");
+            logger.LogInformation("Creating '{UserRole}' role...", UserRole);
             var roleResult = await roleManager.CreateAsync(new IdentityRole(UserRole));
 
             if (roleResult.Succeeded)
             {
-                logger.LogInformation($"'{UserRole}' role created successfully.");
+                logger.LogInformation("'{UserRole}' role created successfully.", UserRole);
             }
             else
             {
-                logger.LogError($"Failed to create '{UserRole}' role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+                logger.LogError("Failed to create '{UserRole}' role: {Errors}", UserRole, string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
         }
         else
         {
-            logger.LogInformation($"'{UserRole}' role already exists.");
+            logger.LogInformation("'{UserRole}' role already exists.", UserRole);
         }
 
 
@@ -599,7 +605,7 @@ async static Task InitializeDatabaseAsync(WebApplication app)
             
             if (existingAdmin == null)
             {
-                logger.LogInformation($"Creating default admin user '{adminEmail}'...");
+                logger.LogInformation("Creating default admin user '{AdminEmail}'...", adminEmail);
                 
                 var adminUser = new ApplicationUser
                 {
@@ -613,7 +619,7 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
                 if (createResult.Succeeded)
                 {
-                    logger.LogInformation($"Default admin user '{adminEmail}' created successfully.");
+                    logger.LogInformation("Default admin user '{AdminEmail}' created successfully.", adminEmail);
 
                     // Add user to Admin role and AuditInvestigator role
                     var addToRoleResult1 = await userManager.AddToRoleAsync(adminUser, adminRoleName);
@@ -621,44 +627,44 @@ async static Task InitializeDatabaseAsync(WebApplication app)
 
                     if (addToRoleResult1.Succeeded)
                     {
-                        logger.LogInformation($"User '{adminEmail}' added to '{adminRoleName}' role.");
+                        logger.LogInformation("User '{AdminEmail}' added to '{AdminRoleName}' role.", adminEmail, adminRoleName);
                     }
                     else
                     {
-                        logger.LogError($"Failed to add user to '{adminRoleName}' role: {string.Join(", ", addToRoleResult1.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to add user to '{AdminRoleName}' role: {Errors}", adminRoleName, string.Join(", ", addToRoleResult1.Errors.Select(e => e.Description)));
                     }
 
                     if (addToRoleResult2.Succeeded)
                     {
-                        logger.LogInformation($"User '{adminEmail}' added to '{AuditInvestigatorRole}' role.");
+                        logger.LogInformation("User '{AdminEmail}' added to '{AuditInvestigatorRole}' role.", adminEmail, AuditInvestigatorRole);
                     }
                     else
                     {
-                        logger.LogError($"Failed to add user to '{AuditInvestigatorRole}' role: {string.Join(", ", addToRoleResult2.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to add user to '{AuditInvestigatorRole}' role: {Errors}", AuditInvestigatorRole, string.Join(", ", addToRoleResult2.Errors.Select(e => e.Description)));
                     }
                     }
                     else
                     {
-                        logger.LogError($"Failed to create default admin user: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to create default admin user: {Errors}", string.Join(", ", createResult.Errors.Select(e => e.Description)));
                     }
             }
             else
             {
-                logger.LogInformation($"Default admin user '{adminEmail}' already exists.");
+                logger.LogInformation("Default admin user '{AdminEmail}' already exists.", adminEmail);
                 
                 // Ensure existing admin has the Admin role
                 if (!await userManager.IsInRoleAsync(existingAdmin, adminRoleName))
                 {
-                    logger.LogInformation($"Adding existing user '{adminEmail}' to '{adminRoleName}' role...");
+                    logger.LogInformation("Adding existing user '{AdminEmail}' to '{AdminRoleName}' role...", adminEmail, adminRoleName);
                     var addToRoleResult = await userManager.AddToRoleAsync(existingAdmin, adminRoleName);
                     
                     if (addToRoleResult.Succeeded)
                     {
-                        logger.LogInformation($"User '{adminEmail}' added to '{adminRoleName}' role.");
+                        logger.LogInformation("User '{AdminEmail}' added to '{AdminRoleName}' role.", adminEmail, adminRoleName);
                     }
                     else
                     {
-                        logger.LogError($"Failed to add user to '{adminRoleName}' role: {string.Join(", ", addToRoleResult.Errors.Select(e => e.Description))}");
+                        logger.LogError("Failed to add user to '{AdminRoleName}' role: {Errors}", adminRoleName, string.Join(", ", addToRoleResult.Errors.Select(e => e.Description)));
                     }
                 }
             }
