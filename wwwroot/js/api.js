@@ -97,6 +97,13 @@ export async function api(url, { method = 'GET', body } = {}) {
   if (!res.ok) {
     const msg = await safeJson(res);
     const errorMessage = msg?.error || res.statusText;
+
+    // Handle rate limiting (429 Too Many Requests)
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After') || '60';
+      location.hash = `/rate-limit?retryAfter=${retryAfter}`;
+      throw new Error(errorMessage);
+    }
     
     // If CSRF token is invalid/expired, try to refresh it once and retry
     if (res.status === 400 && errorMessage.includes('antiforgery')) {

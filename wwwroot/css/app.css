@@ -2330,3 +2330,43 @@ table.grid tbody tr:hover {
   max-height: 200px;
   overflow-y: auto;
 }
+
+.rate-limit-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+  color: var(--warning);
+}
+
+.rate-limit-icon .icon {
+  width: 64px;
+  height: 64px;
+}
+
+.rate-limit-info {
+  text-align: center;
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: var(--space-lg) 0;
+}
+
+.rate-limit-tips {
+  margin: var(--space-lg) 0;
+}
+
+.rate-limit-tips h3 {
+  font-size: 1rem;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+}
+
+.rate-limit-tips ul {
+  list-style: disc;
+  padding-left: var(--space-lg);
+  margin: 0;
+}
+
+.rate-limit-tips li {
+  margin-bottom: var(--space-xs);
+}

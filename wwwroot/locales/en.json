@@ -27,7 +27,7 @@
     "lastUpdate": "Last updated",
     "pagination": "Pagination"
   },
-  
+
   "auth": {
     "login": {
       "title": "Sign in to your account",
@@ -42,7 +42,7 @@
       "emailPlaceholder": "name@example.com",
       "passwordPlaceholder": "••••••••"
     },
-    
+
     "register": {
       "title": "Create your account",
       "email": "Email Address",
@@ -58,7 +58,7 @@
       "passwordsNoMatch": "Passwords do not match",
       "minLength": "Minimum {{length}} characters"
     },
-    
+
     "forgotPassword": {
       "title": "Reset your password",
       "description": "Enter your email address and we'll send you instructions to reset your password.",
@@ -69,7 +69,7 @@
       "successMessage": "If this email is registered, a password reset link will be sent.",
       "emailPlaceholder": "name@example.com"
     },
-    
+
     "resetPassword": {
       "title": "Set your new password",
       "email": "Email Address",
@@ -87,7 +87,7 @@
       "generatePassword": "Generate secure password",
       "toggleVisibility": "Show/hide password"
     },
-    
+
     "verifyEmail": {
       "title": "Verify your email",
       "description": "Enter the verification code sent to your email or click the link in the email.",
@@ -100,12 +100,12 @@
       "backToLogin": "Back to login",
       "successMessage": "Email verified successfully. You can now log in."
     },
-    
+
     "logout": {
       "loggingOut": "Logging out...",
       "title": "Logging Out"
     },
-    
+
     "twoFactor": {
       "required": "Two-factor authentication required",
       "enterCode": "Enter your 6-digit authentication code",
@@ -117,7 +117,7 @@
       "invalidCode": "Invalid 2FA code",
       "emailCodeSent": "A verification code has been sent to your email"
     },
-    
+
     "setup2fa": {
       "title": "Setup Two-Factor Authentication",
       "enforcedNotice": "Your administrator requires two-factor authentication to be enabled.",
@@ -190,7 +190,7 @@
       }
     }
   },
-  
+
   "home": {
     "welcome": "Welcome, {{name}}!",
     "profileStatus": {
@@ -211,7 +211,7 @@
       "editProfile": "Edit Profile"
     }
   },
-  
+
   "profile": {
     "title": "Profile Settings",
     "personalInfo": {
@@ -264,7 +264,7 @@
       "updatedAt": "Last updated"
     }
   },
-  
+
   "admin": {
     "users": {
       "title": "User Management",
@@ -505,7 +505,7 @@
       "hoursAgo": "{{hours}}h ago",
       "error": "Error:"
     }
-  },  
+  },
   "errors": {
     "generic": "An error occurred. Please try again.",
     "unauthorized": "You are not authorized to access this page.",
@@ -519,7 +519,7 @@
     "sessionExpired": "Your session has expired. Please log in again.",
     "pwChangeError": "Password change failed."
   },
-  
+
   "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",
@@ -530,7 +530,7 @@
     "passwordRequireLowercase": "Password must contain at least one lowercase letter",
     "passwordRequireDigit": "Password must contain at least one digit"
   },
-  
+
   "nav": {
     "home": "Home",
     "profile": "Profile",
@@ -538,5 +538,19 @@
     "users": "Users",
     "settings": "Settings",
     "logout": "Logout"
+  },
+  "rateLimit": {
+    "title": "Too Many Requests",
+    "subtitle": "Please slow down",
+    "message": "Rate Limit Exceeded",
+    "description": "You've made too many requests in a short period. Please wait approximately {{minutes}} minute(s) before trying again.",
+    "waitTime": "Please wait {{seconds}} seconds",
+    "tipsTitle": "Why did this happen?",
+    "tip1": "Too many login attempts in a short time",
+    "tip2": "Multiple failed authentication requests",
+    "tip3": "Automated requests detected",
+    "retryIn": "Retry in {{seconds}}s",
+    "tryAgain": "Try Again",
+    "backToLogin": "Back to Login"
   }
 }

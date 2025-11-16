@@ -19,6 +19,7 @@ import { registerAuditLogs } from '/js/views/audit-logs.js';
 import { registerSystemLogs } from '/js/views/system-logs.js';
 import { registerRequestLogs } from '/js/views/request-logs.js';
 import { registerErrorLogs } from '/js/views/error-logs.js';
+import { registerRateLimit } from '/js/views/rate-limit.js';
 import { icon, Icons } from '/js/icons.js';
 
 /**
@@ -132,6 +133,7 @@ registerAuditLogs(route);
 registerSystemLogs(route);
 registerRequestLogs(route);
 registerErrorLogs(route);
+registerRateLimit(route);
 
 // 404 handler
 route('/404', el => {

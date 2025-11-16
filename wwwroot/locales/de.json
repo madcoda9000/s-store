@@ -27,7 +27,7 @@
     "lastUpdate": "Zuletzt aktualisiert",
     "pagination": "Seitennummerierung"
   },
-  
+
   "auth": {
     "login": {
       "title": "Bei Ihrem Konto anmelden",
@@ -42,7 +42,7 @@
       "emailPlaceholder": "name@beispiel.de",
       "passwordPlaceholder": "••••••••"
     },
-    
+
     "register": {
       "title": "Konto erstellen",
       "email": "E-Mail-Adresse",
@@ -58,7 +58,7 @@
       "passwordsNoMatch": "Passwörter stimmen nicht überein",
       "minLength": "Mindestens {{length}} Zeichen"
     },
-    
+
     "forgotPassword": {
       "title": "Passwort zurücksetzen",
       "description": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen Anweisungen zum Zurücksetzen Ihres Passworts.",
@@ -69,7 +69,7 @@
       "successMessage": "Falls diese E-Mail registriert ist, wird ein Link zum Zurücksetzen des Passworts gesendet.",
       "emailPlaceholder": "name@beispiel.de"
     },
-    
+
     "resetPassword": {
       "title": "Neues Passwort festlegen",
       "email": "E-Mail-Adresse",
@@ -87,7 +87,7 @@
       "generatePassword": "Sicheres Passwort generieren",
       "toggleVisibility": "Passwort anzeigen/verbergen"
     },
-    
+
     "verifyEmail": {
       "title": "E-Mail-Adresse verifizieren",
       "description": "Geben Sie den Verifizierungscode ein, der an Ihre E-Mail gesendet wurde, oder klicken Sie auf den Link in der E-Mail.",
@@ -100,12 +100,12 @@
       "backToLogin": "Zurück zur Anmeldung",
       "successMessage": "E-Mail erfolgreich verifiziert. Sie können sich jetzt anmelden."
     },
-    
+
     "logout": {
       "loggingOut": "Wird abgemeldet...",
       "title": "Abmeldung"
     },
-    
+
     "twoFactor": {
       "required": "Zwei-Faktor-Authentifizierung erforderlich",
       "enterCode": "Geben Sie Ihren 6-stelligen Authentifizierungscode ein",
@@ -117,7 +117,7 @@
       "invalidCode": "Ungültiger 2FA-Code",
       "emailCodeSent": "Ein Verifizierungscode wurde an Ihre E-Mail gesendet"
     },
-    
+
     "setup2fa": {
       "title": "Zwei-Faktor-Authentifizierung einrichten",
       "enforcedNotice": "Ihr Administrator verlangt, dass die Zwei-Faktor-Authentifizierung aktiviert wird.",
@@ -190,7 +190,7 @@
       }
     }
   },
-  
+
   "home": {
     "welcome": "Willkommen, {{name}}!",
     "profileStatus": {
@@ -211,7 +211,7 @@
       "editProfile": "Profil bearbeiten"
     }
   },
-  
+
   "profile": {
     "title": "Profil-Einstellungen",
     "personalInfo": {
@@ -264,7 +264,7 @@
       "updatedAt": "Zuletzt aktualisiert"
     }
   },
-  
+
   "admin": {
     "users": {
       "title": "Benutzerverwaltung",
@@ -506,7 +506,7 @@
       "error": "Fehler:"
     }
   },
-  
+
   "errors": {
     "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "unauthorized": "Sie sind nicht berechtigt, auf diese Seite zuzugreifen.",
@@ -520,7 +520,7 @@
     "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
     "pwChangeError": "Passwortwechsel fehlgeschlagen."
   },
-  
+
   "validation": {
     "required": "Dieses Feld ist erforderlich",
     "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
@@ -531,7 +531,7 @@
     "passwordRequireLowercase": "Passwort muss mindestens einen Kleinbuchstaben enthalten",
     "passwordRequireDigit": "Passwort muss mindestens eine Ziffer enthalten"
   },
-  
+
   "nav": {
     "home": "Startseite",
     "profile": "Profil",
@@ -539,5 +539,19 @@
     "users": "Benutzer",
     "settings": "Einstellungen",
     "logout": "Abmelden"
+  },
+  "rateLimit": {
+    "title": "Zu viele Anfragen",
+    "subtitle": "Bitte verlangsamen",
+    "message": "Ratenlimit überschritten",
+    "description": "Sie haben zu viele Anfragen in kurzer Zeit gestellt. Bitte warten Sie etwa {{minutes}} Minute(n), bevor Sie es erneut versuchen.",
+    "waitTime": "Bitte warten Sie {{seconds}} Sekunden",
+    "tipsTitle": "Warum ist das passiert?",
+    "tip1": "Zu viele Anmeldeversuche in kurzer Zeit",
+    "tip2": "Mehrere fehlgeschlagene Authentifizierungsanfragen",
+    "tip3": "Automatisierte Anfragen erkannt",
+    "retryIn": "Erneut versuchen in {{seconds}}s",
+    "tryAgain": "Erneut versuchen",
+    "backToLogin": "Zurück zur Anmeldung"
   }
 }
