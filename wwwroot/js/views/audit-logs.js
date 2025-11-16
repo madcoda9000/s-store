@@ -10,15 +10,16 @@ import { hasRole, renderAccessDenied } from '../auth-utils.js';
  * State management for audit logs view
  */
 const state = {
-  currentPage: 1,
-  pageSize: 10,
+  searchQuery: '',
   sortBy: 'timestamp',
   sortOrder: 'desc',
-  searchQuery: '',
+  page: 1,
+  pageSize: 30,
   fromDate: '',
   toDate: '',
   isInvestigator: false,
-  decryptedLogs: new Map() // Map<logId, decryptedUser>
+  decryptedLogs: new Map(), // Map<logId, decryptedUser>
+  loadDecrypted: false // Whether to load all logs with decrypted user info
 };
 
 /** @type {(e: Event) => void | null} */
@@ -104,7 +105,7 @@ async function loadLogs(el) {
 
     // Build query parameters
     const params = new URLSearchParams({
-      decrypt: 'false',
+      decrypt: state.loadDecrypted ? 'true' : 'false',
       limit: '1000' // Get all for client-side filtering
     });
 
@@ -114,6 +115,11 @@ async function loadLogs(el) {
 
     if (state.toDate) {
       params.append('toDate', new Date(state.toDate).toISOString());
+    }
+
+    // Add justification if loading decrypted logs
+    if (state.loadDecrypted && state.bulkDecryptJustification) {
+      params.append('justification', state.bulkDecryptJustification);
     }
 
     // Fetch logs
@@ -260,7 +266,7 @@ function renderView(data, loading) {
   return `
     <div class="section">
       <div class="section-header">
-        <h2 class="section-title mb-0">${icon(Icons.SHIELD, 'icon')} ${t('admin.auditLogs.title')}</h2>
+        <h2 class="section-title mb-0">${icon(Icons.SHIELD, 'icon')} ${t('admin.auditLogs.title')}</h2>        
       </div>
 
       ${renderFilters()}
@@ -289,6 +295,12 @@ function renderFilters() {
       <button id="search-btn" class="btn btn-primary" type="button">
         ${icon(Icons.SEARCH, 'icon')} ${t('admin.auditLogs.search')}
       </button>
+      ${state.isInvestigator ? `
+          <button class="btn ${state.loadDecrypted ? 'btn-danger' : 'btn-tertiary'}" id="toggle-decrypt-btn">
+            ${icon(Icons.KEY, 'icon')} 
+            ${state.loadDecrypted ? t('admin.auditLogs.hideDecrypted') || 'Hide Decrypted' : t('admin.auditLogs.showEncrypted') || 'Show Decrypted'}
+          </button>
+        ` : ''}
     </div>
 
     <div class="log-filters">
@@ -368,7 +380,6 @@ function renderLogsTable(data) {
               ${t('admin.auditLogs.context')}
             </th>
             <th>${t('admin.auditLogs.message')}</th>
-            ${state.isInvestigator ? `<th>${t('admin.auditLogs.actions')}</th>` : ''}
           </tr>
         </thead>
         <tbody>
@@ -387,32 +398,34 @@ function renderLogsTable(data) {
  * @returns {string} HTML string
  */
 function renderLogRow(log) {
-  // Check if this log has been decrypted
-  const decryptedUser = state.decryptedLogs.get(log.id);
+  // Check if this log has been individually decrypted
+  const individuallyDecrypted = state.decryptedLogs.get(log.id);
+  
+  // Check if log has decrypted user from bulk decrypt (backend returns decryptedUser property)
+  const bulkDecrypted = log.decryptedUser;
+  
+  // Determine which user to display
+  const displayUser = individuallyDecrypted || bulkDecrypted || log.user;
+  const isDecrypted = individuallyDecrypted || bulkDecrypted;
 
   return `
     <tr>
       <td class="log-cell-timestamp">${formatTimestamp(log.timestamp)}</td>
       <td class="log-cell-user">
-        ${decryptedUser 
-          ? `<span class="user-decrypted">${escapeHtml(decryptedUser)}</span><br><span class="user-pseudonym-small text-muted">${escapeHtml(log.user)}</span>`
-          : escapeHtml(log.user)
+        ${state.isInvestigator && log.hasEncryptedInfo && !isDecrypted
+          ? `<button class="btn btn-sm btn-tertiary decrypt-btn" data-log-id="${log.id}" data-log-action="${escapeHtml(log.action)}" data-log-timestamp="${escapeHtml(log.timestamp)}" data-log-user="${escapeHtml(log.user)}" title="${t('admin.auditLogs.decrypt')}">
+              ${icon(Icons.KEY, 'icon')}
+            </button> `
+          : ''
+        }
+        ${isDecrypted 
+          ? `<span class="user-decrypted">${escapeHtml(displayUser)}</span>${log.pseudonym ? `<br><span class="user-pseudonym-small text-muted">${escapeHtml(log.pseudonym)}</span>` : ''}`
+          : escapeHtml(displayUser || log.user || '')
         }
       </td>
       <td class="log-cell-action">${escapeHtml(log.action)}</td>
       <td class="log-cell-context hide-mobile">${escapeHtml(log.context)}</td>
       <td class="log-cell-message">${escapeHtml(log.message)}</td>
-      ${state.isInvestigator 
-        ? `<td>
-            ${log.hasEncryptedInfo 
-              ? `<button class="btn btn-sm btn-warning decrypt-btn" data-log-id="${log.id}" data-log-action="${escapeHtml(log.action)}" data-log-timestamp="${escapeHtml(log.timestamp)}" data-log-user="${escapeHtml(log.user)}">
-                  ${icon(Icons.KEY, 'icon')} ${t('admin.auditLogs.decrypt')}
-                </button>`
-              : `<span class="text-muted no-encrypted-data">${t('admin.auditLogs.noEncryptedData')}</span>`
-            }
-          </td>`
-        : ''
-      }
     </tr>
   `;
 }
@@ -533,6 +546,98 @@ function renderError(message) {
 }
 
 /**
+ * Opens the bulk decrypt modal for loading all logs with decryption
+ * @param {HTMLElement} el - Container element
+ * @returns {void}
+ */
+function openBulkDecryptModal(el) {
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-content-wide">
+      <div class="modal-header">
+        <h3>${icon(Icons.KEY, 'icon')} ${t('admin.auditLogs.decryptModal.title') || 'Load Decrypted Logs'}</h3>
+        <button class="modal-close" aria-label="Close">
+          ${icon(Icons.X, 'icon')}
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-tertiary">
+          <strong>Warning:</strong> ${t('admin.auditLogs.decryptModal.warning') || 'You are about to load all audit logs with decrypted user information. This action will be logged.'}
+        </div>
+
+        <form id="bulk-decrypt-form">
+          <div class="form-group">
+            <label for="bulk-justification" class="label">
+              ${t('admin.auditLogs.decryptModal.justificationLabel') || 'Justification'} <span class="decrypt-required-star">*</span>
+            </label>
+            <textarea
+              id="bulk-justification"
+              class="textarea"
+              required
+              minlength="10"
+              maxlength="500"
+              placeholder="${t('admin.auditLogs.decryptModal.justificationPlaceholder') || 'Enter justification...'}"
+            ></textarea>
+            <p class="form-hint">${t('admin.auditLogs.decryptModal.justificationPlaceholder') || 'Provide justification for viewing decrypted logs.'}</p>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn btn-tertiary">
+              ${icon(Icons.KEY, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton') || 'Load Decrypted'}
+            </button>
+            <button type="button" class="btn btn-secondary modal-cancel">
+              ${t('common.cancel') || 'Cancel'}
+            </button>
+          </div>
+
+          <div id="bulk-decrypt-result"></div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeBtn = modal.querySelector('.modal-close');
+  const cancelBtn = modal.querySelector('.modal-cancel');
+  const overlay = modal.querySelector('.modal-overlay');
+  const form = /** @type {HTMLFormElement} */ (modal.querySelector('#bulk-decrypt-form'));
+  const resultDiv = modal.querySelector('#bulk-decrypt-result');
+
+  const closeModal = () => modal.remove();
+
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  overlay?.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const justificationInput = /** @type {HTMLTextAreaElement} */ (form.querySelector('#bulk-justification'));
+    const justification = justificationInput.value.trim();
+
+    if (!justification || justification.length < 10) {
+      if (resultDiv) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Justification must be at least 10 characters</div>`;
+      }
+      return;
+    }
+
+    state.loadDecrypted = true;
+    state.bulkDecryptJustification = justification;
+    state.currentPage = 1;
+
+    closeModal();
+    el.innerHTML = renderView(null, true);
+    setupEventHandlers(el);
+    loadLogs(el);
+  });
+}
+
+/**
  * Opens the decrypt modal for a specific log entry
  * @param {number} logId - Log ID
  * @param {string} action - Log action
@@ -553,7 +658,7 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
         </button>
       </div>
       <div class="modal-body">
-        <div class="alert alert-warning">
+        <div class="alert alert-tertiary">
           <strong>Warning:</strong> ${t('admin.auditLogs.decryptModal.warning')}
         </div>
 
@@ -581,7 +686,7 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
           </div>
 
           <div class="button-group">
-            <button type="submit" class="btn btn-warning">
+            <button type="submit" class="btn btn-tertiary">
               ${icon(Icons.UNLOCK, 'icon')} ${t('admin.auditLogs.decryptModal.decryptButton')}
             </button>
             <button type="button" class="btn btn-secondary modal-cancel">
@@ -703,64 +808,6 @@ function openDecryptModal(logId, action, timestamp, pseudonym) {
 }
 
 /**
- * Searches logs by pseudonym
- * @param {string} pseudonym - Pseudonym to search for
- * @param {HTMLElement} el - Container element
- * @returns {Promise<void>}
- */
-async function searchByPseudonym(pseudonym, el) {
-  try {
-    // Show loading state
-    const container = el.querySelector('#logs-container');
-    if (container) {
-      container.innerHTML = `<div class="log-loading"><div class="spinner"></div><p>${t('admin.auditLogs.loadingLogs')}</p></div>`;
-    }
-
-    // Fetch logs by pseudonym
-    /** @type {{logs: AuditLogEntry[], count: number, pseudonym: string}} */
-    const response = await api(`/admin/audit/by-pseudonym/${encodeURIComponent(pseudonym)}`);
-
-    // Sort logs
-    let logs = sortLogs(response.logs, state.sortBy, state.sortOrder);
-
-    // Apply pagination
-    const total = logs.length;
-    const totalPages = Math.ceil(total / state.pageSize);
-    const startIndex = (state.currentPage - 1) * state.pageSize;
-    const endIndex = startIndex + state.pageSize;
-    const paginatedLogs = logs.slice(startIndex, endIndex);
-
-    // Update container
-    if (container) {
-      container.innerHTML = `
-        <div class="alert alert-info mb-25">
-          Found ${total} log(s) for pseudonym: <code>${escapeHtml(pseudonym)}</code>
-          <button id="clear-pseudonym-search" class="btn btn-sm btn-secondary ml-10">
-            Show All Logs
-          </button>
-        </div>
-        ${renderLogsTable({
-          logs: paginatedLogs,
-          pagination: {
-            page: state.currentPage,
-            size: state.pageSize,
-            total: total,
-            totalPages: totalPages
-          }
-        })}
-      `;
-    }
-
-  } catch (err) {
-    const error = /** @type {Error} */ (err);
-    const container = el.querySelector('#logs-container');
-    if (container) {
-      container.innerHTML = `<div class="log-error"><div class="alert alert-danger">${escapeHtml(error.message)}</div></div>`;
-    }
-  }
-}
-
-/**
  * Sets up event handlers (called only once)
  * @param {HTMLElement} el - Container element
  * @returns {void}
@@ -807,6 +854,22 @@ function setupEventHandlers(el) {
       state.toDate = '';
       state.currentPage = 1;
       loadLogs(el);
+      return;
+    }
+
+    // Toggle decrypt button
+    if (target.closest('#toggle-decrypt-btn')) {
+      if (!state.loadDecrypted) {
+        // Show justification modal before enabling decryption
+        openBulkDecryptModal(el);
+      } else {
+        // Disable decryption
+        state.loadDecrypted = false;
+        state.currentPage = 1;
+        el.innerHTML = renderView(null, true);
+        setupEventHandlers(el);
+        loadLogs(el);
+      }
       return;
     }
 

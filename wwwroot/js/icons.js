@@ -29,6 +29,7 @@ export const Icons = {
   
   // User & Auth
   USER: 'user',
+  USER_PLUS: 'user-plus',
   USERS: 'users',
   SHIELD: 'shield',
   SHIELD_CHECK: 'shield-check',

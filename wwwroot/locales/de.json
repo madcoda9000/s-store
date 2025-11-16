@@ -372,6 +372,8 @@
       "context": "Kontext",
       "message": "Nachricht",
       "actions": "Aktionen",
+      "showEncrypted": "Entschlüsseln",
+      "hideDecrypted": "Verstecken",
       "decrypt": "Entschlüsseln",
       "noEncryptedData": "Keine verschlüsselten Daten",
       "pseudonymSearch": {

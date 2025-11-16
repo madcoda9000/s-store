@@ -373,6 +373,8 @@
       "message": "Message",
       "actions": "Actions",
       "decrypt": "Decrypt",
+      "showEncrypted": "Decrypt all!",
+      "hideDecrypted": "Hide Decrypted",
       "noEncryptedData": "No encrypted data",
       "pseudonymSearch": {
         "title": "Search by Pseudonym",

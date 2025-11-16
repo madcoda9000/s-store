@@ -236,7 +236,7 @@ function renderView(data, loading) {
     <div class="section">
       <div class="section-header">
         <h2 class="section-title mb-0">${t('admin.users.title') || 'Users'}</h2>
-        <button class="btn btn-primary" id="add-user-btn">${t('admin.users.addUser') || 'Add User'}</button>
+        <button class="btn btn-primary" id="add-user-btn">${icon(Icons.USER_PLUS, 'icon')} ${t('admin.users.addUser') || 'Add User'}</button>
       </div>
 
       ${renderFilters()}
