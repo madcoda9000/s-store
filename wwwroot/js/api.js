@@ -4,6 +4,10 @@
 let csrfToken = null;
 /** @type {Promise<void>|null} */
 let csrfTokenPromise = null;
+/** @type {AppConfig|null} */
+let appConfigCache = null;
+/** @type {Promise<AppConfig|null>|null} */
+let appConfigPromise = null;
 
 /**
  * Sets the CSRF token directly (e.g., after login)
@@ -21,6 +25,41 @@ export function setCsrfToken(token) {
 export function clearCsrfToken() {
   csrfToken = null;
   csrfTokenPromise = null;
+}
+
+/**
+ * Retrieves application configuration from backend with in-memory caching
+ * @returns {Promise<AppConfig|null>} Application configuration object or null when unavailable
+ */
+export async function getAppConfig() {
+  if (appConfigCache) {
+    return appConfigCache;
+  }
+
+  if (appConfigPromise) {
+    return appConfigPromise;
+  }
+
+  appConfigPromise = (async () => {
+    try {
+      const response = await fetch('/api/config', { credentials: 'include' });
+      if (!response.ok) {
+        return null;
+      }
+
+      /** @type {AppConfig} */
+      const config = await response.json();
+      appConfigCache = config;
+      return config;
+    } catch (error) {
+      console.error('Error fetching app config', error);
+      return null;
+    } finally {
+      appConfigPromise = null;
+    }
+  })();
+
+  return appConfigPromise;
 }
 
 /**

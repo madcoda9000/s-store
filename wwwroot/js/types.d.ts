@@ -22,6 +22,34 @@ interface LogEntry {
 }
 
 /**
+ * Application configuration returned by /api/config
+ */
+interface AppConfig {
+  /** Request logging settings */
+  requestLogging?: AppConfigRequestLogging;
+  /** Application specific settings */
+  application?: AppConfigApplication;
+}
+
+/**
+ * Request logging configuration flags
+ */
+interface AppConfigRequestLogging {
+  /** Whether request logging is enabled */
+  enabled: boolean;
+}
+
+/**
+ * Application UI configuration flags
+ */
+interface AppConfigApplication {
+  /** Controls the visibility of the register link on login page */
+  showRegisterLinkOnLoginPage: boolean;
+  /** Controls the visibility of the forgot password link on login page */
+  showForgotPasswordLinkOnLoginPage: boolean;
+}
+
+/**
  * Pagination information
  */
 interface PaginationInfo {

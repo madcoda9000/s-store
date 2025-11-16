@@ -1,6 +1,6 @@
 // /wwwroot/js/views/forgot-password.js
 
-import { api, setCsrfToken } from "../api.js";
+import { api, getAppConfig, setCsrfToken } from "../api.js";
 import { hideHeader } from "../header.js";
 import { icon, Icons } from "../icons.js";
 import { t } from "../i18n.js";
@@ -11,7 +11,13 @@ import { t } from "../i18n.js";
  * @returns {void}
  */
 export function registerForgotPassword(route) {
-  route("/forgot-password", (el) => {
+  route("/forgot-password", async (el) => {
+    const config = await getAppConfig();
+    if (config?.application?.showForgotPasswordLinkOnLoginPage === false) {
+      location.hash = "/login";
+      return;
+    }
+
     // Hide header on auth page
     hideHeader();
 

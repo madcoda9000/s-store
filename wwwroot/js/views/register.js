@@ -1,6 +1,6 @@
 // /wwwroot/js/views/register.js
 
-import { api, setCsrfToken } from "../api.js";
+import { api, getAppConfig, setCsrfToken } from "../api.js";
 import { hideHeader } from "../header.js";
 import { icon, Icons } from "../icons.js";
 import { t } from "../i18n.js";
@@ -11,7 +11,13 @@ import { t } from "../i18n.js";
  * @returns {void}
  */
 export function registerRegister(route) {
-  route("/register", (el) => {
+  route("/register", async (el) => {
+    const config = await getAppConfig();
+    if (config?.application?.showRegisterLinkOnLoginPage === false) {
+      location.hash = "/login";
+      return;
+    }
+
     // Hide header on register page
     hideHeader();
 

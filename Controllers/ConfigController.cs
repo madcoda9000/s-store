@@ -19,8 +19,12 @@ namespace sstore.Controllers
                 requestLogging = new
                 {
                     enabled = Environment.GetEnvironmentVariable("REQUEST_LOGGING_ENABLED")?.ToLower() == "true"
-                }
-                // Add other config values here as needed
+                },
+                application = new
+                {
+                    showRegisterLinkOnLoginPage = Environment.GetEnvironmentVariable("SHOW_REGISTER_LINK_ON_LOGIN_PAGE")?.ToLower() == "true",
+                    showForgotPasswordLinkOnLoginPage = Environment.GetEnvironmentVariable("SHOW_FORGOT_PASSWORD_LINK_ON_LOGIN_PAGE")?.ToLower() == "true"
+                },
             });
         }
     }

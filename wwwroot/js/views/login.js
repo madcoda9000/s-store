@@ -1,6 +1,6 @@
 // /wwwroot/js/views/login.js
 
-import { api, setCsrfToken } from "../api.js";
+import { api, getAppConfig, setCsrfToken } from "../api.js";
 import { hideHeader } from "../header.js";
 import { icon, Icons } from "../icons.js";
 import { t } from "../i18n.js";
@@ -11,7 +11,7 @@ import { t } from "../i18n.js";
  * @returns {void}
  */
 export function registerLogin(route) {
-  route("/login", (el) => {
+  route("/login", async (el) => {
     // Hide header on login page
     hideHeader();
 
@@ -55,7 +55,7 @@ export function registerLogin(route) {
                   <input type="checkbox" name="remember">
                   <span>${t('auth.login.rememberMe')}</span>
                 </label>
-                <a href="#/forgot-password" class="link">${t('auth.login.forgotPassword')}</a>
+                <a href="#/forgot-password" class="link" data-role="login-forgot-link">${t('auth.login.forgotPassword')}</a>
               </div>
               
               <div id="login-error" class="error hidden"></div>
@@ -64,7 +64,7 @@ export function registerLogin(route) {
             </form>
             
             <div class="auth-footer">
-              <p class="text-muted">${t('auth.login.noAccount')} <a href="#/register" class="link">${t('auth.login.signUp')}</a></p>
+              <p class="text-muted" data-role="login-register-link-description">${t('auth.login.noAccount')} <a href="#/register" class="link" data-role="login-register-link">${t('auth.login.signUp')}</a></p>
             </div>
           </div>
 
@@ -74,6 +74,8 @@ export function registerLogin(route) {
         
         </div>
       </div>`;
+
+    await applyLoginLinkVisibility(el);
 
     const form = /** @type {HTMLFormElement} */ (el.querySelector("#login-form"));
     const errorEl = /** @type {HTMLElement} */ (el.querySelector("#login-error"));
@@ -147,6 +149,36 @@ export function registerLogin(route) {
       }
     });
   });
+}
+
+/**
+ * Applies login link visibility rules based on application configuration
+ * @param {HTMLElement} root - Root element of the login view
+ * @returns {Promise<void>}
+ */
+async function applyLoginLinkVisibility(root) {
+  const config = await getAppConfig();
+  if (!config?.application) {
+    return;
+  }
+
+  const registerLink = root.querySelector('[data-role="login-register-link"]');
+  const registerLinkDescription = root.querySelector('[data-role="login-register-link-description"]');
+  const forgotLink = root.querySelector('[data-role="login-forgot-link"]');
+
+  if (config.application.showRegisterLinkOnLoginPage === false) {
+    registerLink?.classList.add("hidden");
+    registerLinkDescription?.classList.add("hidden");
+  } else {
+    registerLink?.classList.remove("hidden");
+    registerLinkDescription?.classList.remove("hidden");
+  }
+
+  if (config.application.showForgotPasswordLinkOnLoginPage === false) {
+    forgotLink?.classList.add("hidden");
+  } else {
+    forgotLink?.classList.remove("hidden");
+  }
 }
 
 /**
