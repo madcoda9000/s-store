@@ -1065,6 +1065,9 @@ table.grid tbody tr:hover {
 
   .card {
     padding: var(--space-sm);
+    border-top: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
   }
 
   .table th,
@@ -1098,9 +1101,12 @@ table.grid tbody tr:hover {
     padding: 0;
   }
 
-  body {
+  body:has(.auth-container) {
     background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg) 40%);
   }
+
+  #app {
+    margin-left: 10px;  }
 
   .auth-login,
   .auth-register,
@@ -1173,6 +1179,8 @@ table.grid tbody tr:hover {
 
   .nav-dropdown {
     width: 100%;
+    top: 0;
+    margin: 0;
   }
 
   .nav-dropdown-toggle {
@@ -1192,12 +1200,15 @@ table.grid tbody tr:hover {
     padding: var(--space-xs) 0;
     background: transparent;
     transform: none;
+
+    /* Mobile accordion: fully collapse when closed */
+    display: none;
+    opacity: 1;
+    visibility: visible;
   }
 
   .nav-dropdown-menu.show {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
+    display: block;
   }
 
   .nav-dropdown-item {

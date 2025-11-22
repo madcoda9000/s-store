@@ -93,7 +93,7 @@ export function registerRegister(route) {
                     autocomplete="new-password"
                     minlength="12"
                     required>
-                  <button type="button" class="input-action-btn" id="toggle-password" aria-label="${t('resetPassword.toggleVisibility')}">
+                  <button type="button" class="input-action-btn" id="toggle-password" aria-label="${t('auth.register.toggleVisibility')}">
                     ${icon(Icons.EYE, 'icon')}
                   </button>
                 </div>

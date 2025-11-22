@@ -53,6 +53,47 @@ export function registerProfile(route) {
         <div class="section">
           <h2 class="section-title">${t("profile.title")}</h2>
           <div class="grid">
+
+          <!-- Account Information -->
+          <div class="card mb-10 shadow-md">
+            <h3>${t("profile.accountInfo.title")}</h3>
+            <div class="form-group form-row">
+              <div>
+                <span class="text-muted">${t("profile.accountInfo.createdAt")}:</span>
+                <strong>${formatDate(profile.createdAt)}</strong>
+              </div>
+            </div>
+            ${
+              profile.updatedAt
+                ? `
+              <div class="form-group form-row">
+                <div>
+                  <span class="text-muted">${t("common.lastUpdate")}:</span>
+                  <strong>${formatDate(profile.updatedAt)}</strong>
+                </div>
+              </div>
+            `
+                : ""
+            }
+            <div class="form-group form-row pb-10">
+              <div>
+                <span class="text-muted">${t("profile.security.twoFactor")}:</span>
+                <strong>${
+                  profile.twoFactorEnabled
+                    ? '<span class="badge badge-success">' + t("common.enabled") + "</span>"
+                    : '<span class="badge">' + t("common.disabled") + "</span>"
+                }</strong>
+              </div>
+            </div>
+            <hr class="mt-10 mb-10">
+            <h3 class="pt-10">${t("profile.personalInfo.2fainfo")}</h3>
+            <div class="form-group form-row">              
+              <div>   
+                ${twoFactorMessage ? twoFactorMessage : ""}
+              </div>
+            </div>
+          </div>
+          
           <!-- Profile Information Card -->
           <div class="card mb-10 shadow-md">
             <h3>${t("profile.personalInfo.title")}</h3>
@@ -175,45 +216,7 @@ export function registerProfile(route) {
             </form>
           </div>
           
-          <!-- Account Information -->
-          <div class="card mb-10 shadow-md">
-            <h3>${t("profile.accountInfo.title")}</h3>
-            <div class="form-group form-row">
-              <div>
-                <span class="text-muted">${t("profile.accountInfo.createdAt")}:</span>
-                <strong>${formatDate(profile.createdAt)}</strong>
-              </div>
-            </div>
-            ${
-              profile.updatedAt
-                ? `
-              <div class="form-group form-row">
-                <div>
-                  <span class="text-muted">${t("common.lastUpdate")}:</span>
-                  <strong>${formatDate(profile.updatedAt)}</strong>
-                </div>
-              </div>
-            `
-                : ""
-            }
-            <div class="form-group form-row pb-10">
-              <div>
-                <span class="text-muted">${t("profile.security.twoFactor")}:</span>
-                <strong>${
-                  profile.twoFactorEnabled
-                    ? '<span class="badge badge-success">' + t("common.enabled") + "</span>"
-                    : '<span class="badge">' + t("common.disabled") + "</span>"
-                }</strong>
-              </div>
-            </div>
-            <hr class="mt-10 mb-10">
-            <h3 class="pt-10">${t("profile.personalInfo.2fainfo")}</h3>
-            <div class="form-group form-row">              
-              <div>   
-                ${twoFactorMessage ? twoFactorMessage : ""}
-              </div>
-            </div>
-          </div>
+          
           </div>
         </div>`;
 

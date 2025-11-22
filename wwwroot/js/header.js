@@ -99,8 +99,10 @@ function initializeGlobalEvents() {
         return;
       }
       
-      // Handle nav link click
-      if (target.closest('.nav-link') && nav.classList.contains('show')) {
+      // Handle nav link click (including dropdown items) while offcanvas is open
+      // Do not treat dropdown toggle buttons as navigation actions
+      const isDropdownToggle = !!target.closest('.nav-dropdown-toggle');
+      if (!isDropdownToggle && target.closest('a.nav-link, .nav-dropdown-item') && nav.classList.contains('show')) {
         nav.classList.remove('show');
         overlay.classList.remove('show');
         mobileToggle.innerHTML = icon(Icons.MENU, 'icon icon-lg');
@@ -113,18 +115,42 @@ function initializeGlobalEvents() {
     const navDropdownToggle = target.closest('.nav-dropdown-toggle');
     if (navDropdownToggle) {
       e.stopPropagation();
+      const dropdown = navDropdownToggle.closest('.nav-dropdown');
       const dropdownMenu = navDropdownToggle.nextElementSibling;
+      const nav = document.getElementById('main-nav');
+      const isMobileOffcanvas = !!(nav && nav.classList.contains('show') && window.innerWidth <= 768);
       
       if (dropdownMenu && dropdownMenu.classList.contains('nav-dropdown-menu')) {
-        // Close other nav dropdowns
-        document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
-          if (menu !== dropdownMenu) {
-            menu.classList.remove('show');
-          }
-        });
-        
-        // Toggle this dropdown
-        dropdownMenu.classList.toggle('show');
+        if (isMobileOffcanvas && dropdown) {
+          // Mobile accordion behavior inside offcanvas
+          const isOpen = dropdown.classList.contains('open');
+          
+          // Close other open dropdowns in the mobile nav
+          document.querySelectorAll('#main-nav .nav-dropdown.open').forEach(otherDropdown => {
+            if (otherDropdown !== dropdown) {
+              otherDropdown.classList.remove('open');
+              const otherMenu = otherDropdown.querySelector('.nav-dropdown-menu');
+              if (otherMenu) {
+                otherMenu.classList.remove('show');
+              }
+            }
+          });
+          
+          // Toggle current dropdown
+          dropdown.classList.toggle('open', !isOpen);
+          dropdownMenu.classList.toggle('show', !isOpen);
+        } else {
+          // Desktop / non-offcanvas behavior: floating dropdowns
+          // Close other nav dropdowns
+          document.querySelectorAll('.nav-dropdown-menu.show').forEach(menu => {
+            if (menu !== dropdownMenu) {
+              menu.classList.remove('show');
+            }
+          });
+          
+          // Toggle this dropdown
+          dropdownMenu.classList.toggle('show');
+        }
         
         // Close other menus
         const profileMenu = document.getElementById('profile-menu');

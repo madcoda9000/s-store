@@ -56,7 +56,8 @@
       "signIn": "Sign in",
       "optional": "optional",
       "passwordsNoMatch": "Passwords do not match",
-      "minLength": "Minimum {{length}} characters"
+      "minLength": "Minimum {{length}} characters",
+      "toggleVisibility": "Passwort anzeigen/verbergen"
     },
 
     "forgotPassword": {
