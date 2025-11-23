@@ -44,7 +44,7 @@ export function registerProfile(route) {
         twoFactorMessage =
           '<span class="text-muted pr-10">' +
           t("profile.security.twoFactorRecommended") +
-          '</span><br><a href="/#/setup-2fa" class="btn btn-success mt-25" id="enable-2fa">' +
+          '</span><br><a href="/#/setup-2fa" class="btn btn-success btn-block mt-25" id="enable-2fa">' +
           t("profile.security.enable2FA") +
           "</a>";
       }
@@ -206,8 +206,9 @@ export function registerProfile(route) {
                   />
                   <button type="button" class="input-action-btn" data-toggle-password="confirmPassword" aria-label="Toggle password visibility">
                     ${icon(Icons.EYE)}
-                  </button>
+                  </button>                  
                 </div>
+                <small class="form-hint">${t("common.required")}</small>
               </div>
               
               <div id="password-message"></div>

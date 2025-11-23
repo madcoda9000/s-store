@@ -25,7 +25,8 @@
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "lastUpdate": "Zuletzt aktualisiert",
-    "pagination": "Seitennummerierung"
+    "pagination": "Seitennummerierung",
+    "required": "Erforderlich"
   },
 
   "auth": {

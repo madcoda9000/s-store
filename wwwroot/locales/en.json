@@ -25,7 +25,8 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "lastUpdate": "Last updated",
-    "pagination": "Pagination"
+    "pagination": "Pagination",
+    "required": "Required"
   },
 
   "auth": {

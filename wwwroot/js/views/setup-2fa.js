@@ -127,7 +127,7 @@ function renderMethodSelection(el, state) {
                 <span class="badge badge-success ml-10">${t("auth.setup2fa.authenticatorMethod.recommended")}</span>
               </h4>              
               <p class="text-muted mb-10">${t("auth.setup2fa.authenticatorMethod.description")}</p>
-              <button type="button" class="btn btn-primary btn-block" data-select-method="authenticator">
+              <button type="button" class="btn btn-success btn-block" data-select-method="authenticator">
                 ${t("auth.setup2fa.authenticatorMethod.selectButton")}
               </button>
             </div>
@@ -169,7 +169,7 @@ function renderMethodSelection(el, state) {
               <span class="badge badge-success ml-10">${t("auth.setup2fa.authenticatorMethod.recommended")}</span>
             </h4>            
             <p class="text-muted mb-25">${t("auth.setup2fa.authenticatorMethod.description")}</p>
-            <button type="button" class="btn btn-primary btn-block" data-select-method="authenticator">
+            <button type="button" class="btn btn-success btn-block" data-select-method="authenticator">
               ${t("auth.setup2fa.authenticatorMethod.selectButton")}
             </button>
           </div>

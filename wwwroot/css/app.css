@@ -263,7 +263,6 @@ strong {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
 }
 
 .logo {
@@ -1154,7 +1153,11 @@ table.grid tbody tr:hover {
     padding: 0 var(--space-sm);
   }
 
-  .form,
+  .form {
+    background: transparent;
+    border: none; /* <-- Border komplett weg */
+    border-radius: 0;
+  }
   .auth-header,
   .auth-footer {
     background: transparent;
@@ -1788,6 +1791,10 @@ table.grid tbody tr:hover {
 .log-table--dense td {
   padding: var(space-xs) !important; /* less than current */
   line-height: 1.2 !important;
+}
+
+.log-table-user-th {
+  min-width: 230px;
 }
 
 /* === LOG VIEWS - FILTERS & PAGINATION === */

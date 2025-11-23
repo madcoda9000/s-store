@@ -370,7 +370,7 @@ function renderLogsTable(data) {
             <th class="sortable ${state.sortBy === 'timestamp' ? 'sort-' + state.sortOrder : ''}" data-sort="timestamp">
               ${t('admin.auditLogs.timestamp')}
             </th>
-            <th class="sortable ${state.sortBy === 'user' ? 'sort-' + state.sortOrder : ''}" data-sort="user">
+            <th class="log-table-user-th sortable ${state.sortBy === 'user' ? 'sort-' + state.sortOrder : ''}" data-sort="user">
               ${t('admin.auditLogs.user')}
             </th>
             <th class="sortable ${state.sortBy === 'action' ? 'sort-' + state.sortOrder : ''}" data-sort="action">
