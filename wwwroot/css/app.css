@@ -157,6 +157,18 @@
     --shadow-md: 0 2px 4px 0 rgba(255, 255, 255, 0.4);
     --shadow-lg: 0 4px 8px 0 rgba(255, 255, 255, 0.5);
   }
+
+}
+
+@keyframes modal-slide-down {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 
 /* === BASE STYLES === */
@@ -1217,6 +1229,32 @@ table.grid tbody tr:hover {
   .nav-dropdown-item {
     padding: var(--space-sm) var(--space-md);
   }
+
+  /* Admin Users: make add-user button a full-width primary action on mobile */
+  #add-user-btn {
+    position: fixed;
+    right: var(--space-md);
+    bottom: var(--space-md);
+    z-index: 1100;
+    border-radius: 999px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    box-shadow: var(--shadow-lg);
+
+    /* icon-only: hide text label via font-size, icon will override */
+    font-size: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #add-user-btn .icon {
+    color: #ffffff;
+    font-size: 1.1rem;
+    width: 1.1rem;
+    height: 1.1rem;
+  }
 }
 
 /* Tablet specific adjustments */
@@ -1799,6 +1837,79 @@ table.grid tbody tr:hover {
 
 /* === LOG VIEWS - FILTERS & PAGINATION === */
 
+/* Default filters layout: search above page-size selector */
+.users-filters-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  /* Stack search bar vertically on mobile */
+  .log-search-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .log-search-bar #search-btn {
+    width: 100%;
+  }
+
+  .log-filters {
+    margin-top: var(--space-sm);
+  }
+
+  .page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .page-size-selector select {
+    margin: 0 var(--space-xs);
+  }
+
+  /* On mobile, hide page-size selector completely */
+  .users-filters-layout .log-filters {
+    display: none;
+  }
+
+  /* Users table: card-style layout on mobile */
+  .log-table--users thead {
+    display: none;
+  }
+
+  .log-table--users tr {
+    display: block;
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-sm) 0;
+  }
+
+  .log-table--users td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .log-table--users td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-right: var(--space-sm);
+  }
+
+  .log-table--users td:last-child {
+    justify-content: flex-end;
+  }
+
+  .log-table--users .action-buttons {
+    gap: var(--space-xs);
+  }
+}
+
 /* Filter Controls Container */
 .log-filters {
   display: flex;
@@ -2066,6 +2177,10 @@ table.grid tbody tr:hover {
     font-size: var(--text-xs);
   }
 
+  .log-table td {
+    border-bottom: none;
+  }
+
   /* Hide less important columns on mobile */
   .log-table .hide-mobile {
     display: none;
@@ -2076,6 +2191,64 @@ table.grid tbody tr:hover {
     max-width: 200px;
     font-size: var(--text-xs);
   }
+
+  /* Admin Users: compact create/edit user form inside modal on mobile */
+  #user-modal .modal-content {
+    padding: none;
+  }
+
+  #user-modal .form {
+    gap: var(--space-sm);
+  }
+
+  #user-modal .form-group {
+    margin-bottom: var(--space-sm);
+  }
+
+  #user-modal .label {
+    font-size: var(--text-xs);
+  }
+
+  #user-modal .input {
+    padding: 0.5rem 0.75rem;
+    font-size: var(--text-sm);
+  }
+
+  /* Modal: mobile-friendly bottom sheet layout with slide-up animation */
+  .modal {
+    align-items: flex-end;
+    padding-top: 0;
+    padding-bottom: var(--space-sm);
+  }
+
+  @keyframes modal-slide-up {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    margin: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: modal-slide-up 0.2s ease-out;
+  }
+
+   .modal.closing .modal-content {
+     animation: modal-slide-down 0.2s ease-in forwards;
+   }
+
+  .modal-body {
+    max-height: calc(90vh - 120px);
+    overflow-y: auto;
+  }  
 
   /* Pagination adjustments */
   .pagination {
@@ -2194,7 +2367,14 @@ table.grid tbody tr:hover {
 }
 
 .modal-body {
-  padding: var(--space-lg);
+  padding: var(--space-md);
+}
+
+@media (min-width: 769px) {
+  .modal-body {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 /* Mobile Modal Adjustments */

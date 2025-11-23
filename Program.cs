@@ -593,6 +593,8 @@ async static Task InitializeDatabaseAsync(WebApplication app)
         var adminEmail = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_EMAIL");
         var adminPassword = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_PASSWORD");
         var adminUsername = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_USERNAME");
+        var adminFirstname = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_FIRSTNAME");
+        var adminLastname = Environment.GetEnvironmentVariable("DEFAULT_ADMIN_LASTNAME");
 
         if (string.IsNullOrEmpty(adminEmail) || string.IsNullOrEmpty(adminPassword))
         {
@@ -611,6 +613,8 @@ async static Task InitializeDatabaseAsync(WebApplication app)
                     UserName = adminUsername,
                     Email = adminEmail,
                     EmailConfirmed = true, // Auto-confirm for default admin
+                    FirstName = adminFirstname ?? "Super",
+                    LastName = adminLastname ?? "Admin",
                     CreatedAt = DateTime.UtcNow
                 };
 

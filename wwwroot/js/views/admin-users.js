@@ -254,29 +254,31 @@ function renderView(data, loading) {
  */
 function renderFilters() {
   return `
-    <div class="log-search-bar">
-      <input
-        type="text"
-        id="user-search"
-        class="input"
-        placeholder="${t('admin.users.searchPlaceholder') || 'Search by username or email...'}"
-        value="${escapeHtml(state.searchQuery)}"
-      />
-      <button id="search-btn" class="btn btn-primary" type="button">
-        ${icon(Icons.SEARCH, 'icon')} ${t('admin.users.search') || 'Search'}
-      </button>
-    </div>
+    <div class="users-filters-layout">
+      <div class="log-search-bar">
+        <input
+          type="text"
+          id="user-search"
+          class="input"
+          placeholder="${t('admin.users.searchPlaceholder') || 'Search by username or email...'}"
+          value="${escapeHtml(state.searchQuery)}"
+        />
+        <button id="search-btn" class="btn btn-primary" type="button">
+          ${icon(Icons.SEARCH, 'icon')} ${t('admin.users.search') || 'Search'}
+        </button>
+      </div>
 
-    <div class="log-filters">
-      <div class="page-size-selector">
-        <label for="page-size">${t('admin.users.showPerPage') || 'Show'}</label>
-        <select id="page-size">
-          <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10</option>
-          <option value="30" ${state.pageSize === 30 ? 'selected' : ''}>30</option>
-          <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50</option>
-          <option value="100" ${state.pageSize === 100 ? 'selected' : ''}>100</option>
-        </select>
-        <span>${t('admin.users.perPage') || 'per page'}</span>
+      <div class="log-filters">
+        <div class="page-size-selector">
+          <label for="page-size">${t('admin.users.showPerPage') || 'Show'}</label>
+          <select id="page-size">
+            <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10</option>
+            <option value="30" ${state.pageSize === 30 ? 'selected' : ''}>30</option>
+            <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50</option>
+            <option value="100" ${state.pageSize === 100 ? 'selected' : ''}>100</option>
+          </select>
+          <span>${t('admin.users.perPage') || 'per page'}</span>
+        </div>
       </div>
     </div>
   `;
@@ -299,7 +301,7 @@ function renderUsersTable(data) {
 
   return `
     <div class="log-table-container">
-      <table class="log-table log-table--dense" id="users-table">
+      <table class="log-table log-table--dense log-table--users" id="users-table">
         <thead>
           <tr>
             <th class="sortable ${state.sortBy === 'userName' ? 'sort-' + state.sortOrder : ''}" data-sort="userName">
@@ -478,6 +480,11 @@ function openDeleteConfirmModal(userId, userName, el) {
   `;
 
   document.body.appendChild(modal);
+
+  // Remember and disable body scroll while modal is open
+  const previousBodyOverflow = document.body.style.overflow;
+  document.body.dataset.userModalPrevOverflow = previousBodyOverflow;
+  document.body.style.overflow = 'hidden';
 
   // Setup modal event handlers
   const closeBtn = modal.querySelector('.modal-close');
@@ -749,14 +756,14 @@ function renderUserRow(user) {
   
   return `
     <tr>
-      <td><strong>${escapeHtml(user.userName)}</strong></td>
-      <td>${escapeHtml(user.email || '')}</td>
-      <td>
+      <td data-label="${t('admin.users.username') || 'Username'}"><strong>${escapeHtml(user.userName)}</strong></td>
+      <td data-label="${t('admin.users.email') || 'Email'}">${escapeHtml(user.email || '')}</td>
+      <td data-label="${t('admin.users.twoFactor') || '2FA'}">
         ${user.twoFactorEnabled 
           ? `<span class="icon-badge-success">${icon(Icons.CHECK_CIRCLE_FILLED, 'icon icon-lg')}</span>` 
           : `<span class="icon-badge-danger">${icon(Icons.CIRCLE_X_FILLED, 'icon icon-lg')}</span>`}
       </td>
-      <td>
+      <td data-label="${t('admin.users.accountStatus') || 'Account Status'}">
         <div class="toggle-wrapper">
           <label class="toggle-switch">
             <input 
@@ -769,7 +776,7 @@ function renderUserRow(user) {
           </label>
         </div>
       </td>
-      <td>
+      <td data-label="${t('admin.users.twoFactorEnforced') || '2FA Enforced'}">
           <div class="toggle-wrapper">
             <label class="toggle-switch">
               <input 
@@ -782,7 +789,7 @@ function renderUserRow(user) {
             </label>
           </div>
       </td>
-      <td>
+      <td data-label="${t('admin.users.actions') || 'Actions'}">
         <div class="action-buttons">          
           <button class="btn btn-sm btn-danger" data-action="delete" data-method="DELETE" data-id="${user.id}">${icon(Icons.TRASH, 'icon')}</button>
           <button class="btn btn-sm btn-primary" data-action="edit" data-method="GET" data-id="${user.id}">${icon(Icons.EDIT, 'icon')}</button>
@@ -847,7 +854,41 @@ async function openUserModal(el, userId = null) {
 
   // Setup close handlers immediately
   const closeModal = () => {
-    modal.remove();
+    // Add closing class to allow CSS animation (mobile bottom sheet)
+    modal.classList.add('closing');
+
+    const content = modal.querySelector('.modal-content');
+
+    const removeModal = () => {
+      if (document.body.contains(modal)) {
+        modal.remove();
+      }
+
+      // Restore body scroll state when modal closes
+      const prevOverflow = document.body.dataset.userModalPrevOverflow;
+      if (prevOverflow !== undefined) {
+        document.body.style.overflow = prevOverflow;
+        delete document.body.dataset.userModalPrevOverflow;
+      } else {
+        document.body.style.overflow = '';
+      }
+    };
+
+    if (content) {
+      const handleAnimationEnd = () => {
+        content.removeEventListener('animationend', handleAnimationEnd);
+        removeModal();
+      };
+
+      // If an animation is defined, wait for it to finish
+      content.addEventListener('animationend', handleAnimationEnd);
+
+      // Fallback: ensure removal even if animation doesn't fire
+      setTimeout(removeModal, 250);
+    } else {
+      // Fallback: remove immediately
+      removeModal();
+    }
   };
 
   const closeBtn = modal.querySelector('.modal-close');
