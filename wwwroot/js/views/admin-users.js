@@ -516,7 +516,29 @@ function openDeleteConfirmModal(userId, userName, el) {
 
     try {
       const res = await api(`/admin/users/${userId}/delete`, { method: 'DELETE' });
-      
+
+      // Backend can return ok=false with a message when deletion is blocked (e.g. last admin)
+      if (res && res.ok === false) {
+        showToast({
+          type: 'error',
+          title: t('common.error') || 'Error',
+          message:
+            t('admin.users.deleteModal.lastAdminError') ||
+            res.message ||
+            t('admin.users.deleteModal.failed') ||
+            'Failed to delete user'
+        });
+
+        if (res.csrfToken) {
+          setCsrfToken(res.csrfToken);
+        }
+
+        // Re-enable button and restore label so the admin can try another action
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = `${icon(Icons.TRASH, 'icon')} ${t('admin.users.deleteModal.confirm') || 'Yes, Delete User'}`;
+        return;
+      }
+
       showToast({
         type: 'success',
         title: t('common.success') || 'Success',

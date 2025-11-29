@@ -280,8 +280,28 @@ namespace sstore.Controllers
             var u = await _users.FindByIdAsync(id);
             if (u is null) return NotFound();
 
+            var tokens = _anti.GetAndStoreTokens(HttpContext);
+
             var currentUser = await _users.GetUserAsync(User);
             var currentUserName = currentUser?.Email ?? currentUser?.UserName ?? "anonymous";
+
+            var roles = await _users.GetRolesAsync(u);
+            if (roles.Contains("Admin"))
+            {
+                // Count admins
+                var adminUsers = await _users.GetUsersInRoleAsync("Admin");
+                if (adminUsers.Count <= 1)
+                {
+                    // Cannot delete the last admin    
+                    await _log.LogAuditAsync(
+                        "delete",
+                        "AdminUsersController",
+                        "Attempt to delete last admin user blocked",
+                        currentUserName);
+
+                    return Ok(new { ok = false, message = "Cannot delete the last admin user!", csrfToken = tokens.RequestToken });
+                }
+            }           
 
             var res = await _users.DeleteAsync(u);
 
@@ -293,8 +313,7 @@ namespace sstore.Controllers
                 u.UserName + " deleted successfully.",
                 currentUserName);
 
-            var tokens = _anti.GetAndStoreTokens(HttpContext);
-            return Ok(new { ok = true, csrfToken = tokens.RequestToken });
+            return Ok(new { ok = true, message = "User deleted successfully!", csrfToken = tokens.RequestToken });
         }
 
         /// <summary>

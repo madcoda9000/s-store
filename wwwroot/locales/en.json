@@ -313,7 +313,8 @@
         "cancel": "Cancel",
         "deleting": "Deleting...",
         "success": "User deleted successfully!",
-        "failed": "Failed to delete user"
+        "failed": "Failed to delete user",
+        "lastAdminError": "Cannot delete the last admin user. At least one administrator must remain."
       },
       "createModal": {
         "title": "Create New User",

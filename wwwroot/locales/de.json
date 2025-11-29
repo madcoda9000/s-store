@@ -313,7 +313,8 @@
         "cancel": "Abbrechen",
         "deleting": "Wird gelöscht...",
         "success": "Benutzer erfolgreich gelöscht!",
-        "failed": "Benutzer konnte nicht gelöscht werden"
+        "failed": "Benutzer konnte nicht gelöscht werden",
+        "lastAdminError": "Der letzte Administrator kann nicht gelöscht werden. Mindestens ein Administrator muss bestehen bleiben."
       },
       "createModal": {
         "title": "Neuen Benutzer erstellen",
