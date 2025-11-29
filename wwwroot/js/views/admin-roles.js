@@ -286,7 +286,7 @@ function renderRolesTable(data) {
 
   return `
     <div class="log-table-container">
-      <table class="log-table log-table--dense">
+      <table class="log-table log-table--dense log-table--roles log-table--responsive" id="roles-table">
         <thead>
           <tr>
             <th class="sortable ${state.sortBy === 'name' ? 'sort-' + state.sortOrder : ''}" data-sort="name">
@@ -316,9 +316,9 @@ function renderRolesTable(data) {
 function renderRoleRow(role) {
   return `
     <tr>
-      <td class="log-cell-user">${escapeHtml(role.name)}</td>
-      <td class="log-cell-action">${escapeHtml(role.normalizedName)}</td>
-      <td>
+      <td class="log-cell-user" data-label="${t('admin.roles.name') || 'Role Name'}">${escapeHtml(role.name)}</td>
+      <td class="log-cell-action" data-label="${t('admin.roles.normalizedName') || 'Normalized Name'}">${escapeHtml(role.normalizedName)}</td>
+      <td data-label="${t('admin.roles.actions') || 'Actions'}">
         <button class="btn btn-sm btn-danger delete-role-btn" data-role-id="${role.id}" data-role-name="${escapeHtml(role.name)}">
           ${icon(Icons.TRASH, 'icon')} ${t('admin.roles.delete') || 'Delete'}
         </button>
