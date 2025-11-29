@@ -2156,6 +2156,11 @@ table.grid tbody tr:hover {
     min-width: auto;
   }
 
+  /* Hide page-size selectors in log views on mobile, keep pagination at bottom */
+  .log-filters .page-size-selector {
+    display: none;
+  }
+
   .log-search-bar {
     flex-direction: column;
   }
@@ -2190,6 +2195,36 @@ table.grid tbody tr:hover {
   .log-cell-message {
     max-width: 200px;
     font-size: var(--text-xs);
+  }
+
+  /* Generic responsive layout for log tables on mobile */
+  .log-table--responsive thead {
+    display: none;
+  }
+
+  .log-table--responsive tr {
+    display: block;
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-sm) 0;
+  }
+
+  .log-table--responsive td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--space-xs) var(--space-sm);
+  }
+
+  .log-table--responsive td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-right: var(--space-sm);
+    white-space: nowrap;
+  }
+
+  .log-table--responsive .log-cell-message {
+    white-space: normal;
   }
 
   /* Admin Users: compact create/edit user form inside modal on mobile */

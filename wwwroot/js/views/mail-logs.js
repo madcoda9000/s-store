@@ -339,7 +339,7 @@ function renderLogsTable(data) {
 
   return `
     <div class="log-table-container">
-      <table class="log-table">
+      <table class="log-table log-table--responsive">
         <thead>
           <tr>
             <th class="sortable ${state.sortBy === 'timestamp' ? 'sort-' + state.sortOrder : ''}" data-sort="timestamp">
@@ -385,11 +385,11 @@ function renderLogRow(log) {
 
   return `
     <tr>
-      <td class="log-cell-timestamp">${formatTimestamp(log.timestamp)}</td>
-      <td class="log-cell-user">${escapeHtml(log.user)}</td>
-      <td class="${actionClass}">${escapeHtml(log.action)}</td>
-      <td class="log-cell-context hide-mobile">${escapeHtml(log.context)}</td>
-      <td class="log-cell-message">${escapeHtml(log.message)}</td>
+      <td data-label="${t('admin.logs.timestamp')}" class="log-cell-timestamp">${formatTimestamp(log.timestamp)}</td>
+      <td data-label="${t('admin.logs.user')}" class="log-cell-user">${escapeHtml(log.user)}</td>
+      <td data-label="${t('admin.logs.action')}" class="${actionClass}">${escapeHtml(log.action)}</td>
+      <td data-label="${t('admin.mailLogs.recipientContext')}" class="log-cell-context hide-mobile">${escapeHtml(log.context)}</td>
+      <td data-label="${t('admin.logs.message')}" class="log-cell-message">${escapeHtml(log.message)}</td>
     </tr>
   `;
 }
