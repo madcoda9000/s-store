@@ -18,9 +18,9 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 ### Goals
 
-- Integrate with corporate SSO (OpenID Connect / OAuth2).
-- Move from pure role-based checks to **policy-based authorization**.
-- Separate **global/system admins** from regular admins.
+- [ ] Integrate with corporate SSO (OpenID Connect / OAuth2).
+- [ ] Move from pure role-based checks to **policy-based authorization**.
+- [ ] Separate **global/system admins** from regular admins.
 
 ### 1.1 Add SSO via OpenID Connect
 
@@ -83,17 +83,15 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 **Existing:**
 
-- `AdminUsersController.Delete` already prevents deleting the **last Admin** and logs this.
+- [x] `AdminUsersController.Delete` prevents deleting the **last Admin** and logs this.
 
 **Next steps:**
 
-1. **Introduce role hierarchy:**
-   - Add roles like `GlobalAdmin`, `SecurityAdmin`, `UserAdmin` as needed.
-   - Map them from IdP groups if SSO is used.
-2. **Restrict most sensitive operations to `GlobalAdmin`:**
-   - Config changes, rate limit adjustments, encryption key settings.
-3. **Prevent removal of the last `GlobalAdmin` as well:**
-   - Mirror the existing "last Admin" protection for `GlobalAdmin` role.
+- [ ] Introduce role hierarchy:
+  - [ ] Add roles like `GlobalAdmin`, `SecurityAdmin`, `UserAdmin` as needed.
+  - [ ] Map them from IdP groups if SSO is used.
+- [ ] Restrict most sensitive operations to `GlobalAdmin` (config changes, rate limit adjustments, encryption key settings).
+- [ ] Prevent removal of the last `GlobalAdmin` as well (mirror "last Admin" protection for `GlobalAdmin`).
 
 **Touch points:**
 
@@ -103,12 +101,46 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 ---
 
+### 1.4 Optional Active Directory / LDAP Authentication
+
+**Goal:** Allow selected users to authenticate against a corporate Active Directory/LDAP server instead of local passwords, controlled per user via `LdapLoginEnabled` and per environment via config.
+
+**Behavior:**
+
+- If a user has `LdapLoginEnabled == 1` and LDAP is enabled in the environment:
+  - Login uses LDAP/AD to verify the password.
+  - On success, the app signs in the user via ASP.NET Identity (cookie, 2FA, lockout, session regeneration all still apply).
+- Otherwise, login behaves exactly as today (local Identity password).
+
+**Steps (checklist):**
+
+- [ ] Add LDAP/AD configuration (env or appsettings):
+  - [ ] `LDAP_ENABLED=true|false`
+  - [ ] `LDAP_SERVER_URL=ldaps://dc01.corp.local:636`
+  - [ ] `LDAP_BIND_DN=CN=svc_ldap,OU=ServiceAccounts,DC=corp,DC=local`
+  - [ ] `LDAP_BIND_PASSWORD=...`
+  - [ ] `LDAP_BASE_DN=DC=corp,DC=local`
+  - [ ] `LDAP_USER_FILTER=(sAMAccountName={username})` (or similar filter for your AD schema).
+- [ ] Create `ILdapAuthService` + implementation in `Services/`:
+  - [ ] Define `ILdapAuthService` interface.
+  - [ ] Implement `LdapAuthService` (bind, search user DN, validate credentials, optional attribute sync) with LDAPS/TLS and safe logging.
+- [ ] Wire `ILdapAuthService` into DI in `Program.cs` (only when `LDAP_ENABLED=true`, no-op otherwise).
+- [ ] Integrate LDAP into the login flow in `AuthController` as described above.
+- [ ] Adjust admin UX and safeguards:
+  - [ ] Clarify LDAP toggle meaning in admin users view.
+  - [ ] Optionally block enabling LDAP when `LDAP_ENABLED=false`.
+  - [ ] Audit LDAP-related actions and failures with `ISecureLogService`.
+
+This keeps LDAP/AD support **optional**, per environment and per user, while still reusing your existing auth, 2FA, and logging infrastructure.
+
+---
+
 ## Phase 2 – Operability & Observability
 
 ### Goals
 
-- Make the application **easy to monitor and operate**.
-- Provide clear health endpoints, correlation IDs, and basic metrics.
+- [ ] Make the application **easy to monitor and operate**.
+- [ ] Provide clear health endpoints, correlation IDs, and basic metrics.
 
 ### 2.1 Health Checks
 
@@ -184,8 +216,8 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 ### Goals
 
-- Avoid unsafe changes via raw environment variables only.
-- Provide a **config/feature management** system with auditing.
+- [ ] Avoid unsafe changes via raw environment variables only.
+- [ ] Provide a **config/feature management** system with auditing.
 
 ### 3.1 Feature & Config Flags in DB
 
@@ -251,8 +283,8 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 ### Goals
 
-- Give admins and users better control over access.
-- Fully leverage your existing session and 2FA infrastructure.
+- [ ] Give admins and users better control over access.
+- [ ] Fully leverage your existing session and 2FA infrastructure.
 
 ### 4.1 Session & Device Management
 
@@ -308,8 +340,8 @@ Each phase lists **goals**, **concrete steps**, and **files/areas to touch**.
 
 ### Goals
 
-- Ensure changes keep security and critical flows intact.
-- Provide an example CI pipeline teams can reuse.
+- [ ] Ensure changes keep security and critical flows intact.
+- [ ] Provide an example CI pipeline teams can reuse.
 
 ### 5.1 Critical Flow Integration Tests
 
